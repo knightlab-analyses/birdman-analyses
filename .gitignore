@@ -1,0 +1,12 @@
+slurm_out/
+data/
+*.swp
+*.swo
+*.ipynb_checkpoints/
+*.nc
+*.pyc
+*.hpp
+src/*/stan/*model
+src/*/stan/*model_single
+tags
+*.egg-info/
