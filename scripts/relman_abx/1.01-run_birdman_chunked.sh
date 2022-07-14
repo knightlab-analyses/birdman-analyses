@@ -5,7 +5,7 @@
 #SBATCH --mem=8G
 #SBATCH --nodes=1
 #SBATCH --partition=long
-#SBATCH --cpus-per-task=3
+#SBATCH --cpus-per-task=4
 #SBATCH --time=6:00:00
 #SBATCH --array=1-20
 
@@ -33,7 +33,7 @@ time python src/relman_abx/run_birdman_chunked.py \
     --chains 4 \
     --num-iter 500 \
     --num-warmup 1000 \
-    --beta-prior 5.0 \
-    --cauchy-scale 3.0 \
+    --beta-prior 10.0 \
+    --disp-scale 0.5 \
     --re-prior 3.0 \
     --logfile "${LOGDIR}/chunk_${SLURM_ARRAY_TASK_ID}.log" && echo Finished Python script!

@@ -6,7 +6,7 @@ data {
   array[N] int y;
   matrix[N, p] x;
   real<lower=0> B_p;
-  real<lower=0> phi_s;
+  real<lower=0> disp_scale;
 
   // Random Effects
   int<lower=1> num_subjs;
@@ -17,14 +17,14 @@ data {
 parameters {
   real<offset=A, multiplier=2> beta_0;
   vector[p-1] beta_x;
-  real<lower=0> reciprocal_phi;
+  real<lower=0.0001> reciprocal_phi;
   matrix[num_subjs, p] subj_re;  // Subject effect on intercept + slope of each treatment
 }
 
 transformed parameters {
   vector[p] beta_var = append_row(beta_0, beta_x);
-  real phi = inv(reciprocal_phi);
   vector[N] lam;
+  real phi = inv(reciprocal_phi);
 
   for (n in 1:N) {
     lam[n] = depth[n];
@@ -39,13 +39,13 @@ transformed parameters {
 model {
   beta_0 ~ normal(A, 2);
   beta_x ~ normal(0, B_p);
+  reciprocal_phi ~ lognormal(0, disp_scale);
 
   for (i in 1:num_subjs) {
     for (j in 1:p) {
       subj_re[i, j] ~ normal(0, re_p);
     }
   }
-  reciprocal_phi ~ cauchy(0, phi_s);
 
   y ~ neg_binomial_2_log(lam, phi);
 }

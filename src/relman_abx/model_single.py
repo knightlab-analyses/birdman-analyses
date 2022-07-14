@@ -17,7 +17,7 @@ class ABXModelSingle(SingleFeatureModel):
         table: biom.Table,
         feature_id: str,
         beta_prior: float = 10.0,
-        cauchy_scale: float = 5.0,
+        disp_scale: float = 5.0,
         subj_prior: float = 2.0,
         num_iter: int = 500,
         num_warmup: int = 1000,
@@ -52,7 +52,7 @@ class ABXModelSingle(SingleFeatureModel):
             "num_subjs": len(self.subjects),
             "subj_map": samp_subj_map.values,
             "B_p": beta_prior,
-            "phi_s": cauchy_scale,
+            "disp_scale": disp_scale,
             "re_p": subj_prior,
             "A": A
         }

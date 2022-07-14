@@ -27,7 +27,7 @@ FIDS = TABLE.ids(axis="observation")
 @click.option("--num-iter", default=500)
 @click.option("--num-warmup", default=1000)
 @click.option("--beta-prior", default=10.0)
-@click.option("--cauchy-scale", default=3.0)
+@click.option("--disp-scale", default=3.0)
 @click.option("--re-prior", default=3.0)
 @click.option("--logfile", required=True)
 def run_birdman(
@@ -38,7 +38,7 @@ def run_birdman(
     num_iter,
     num_warmup,
     beta_prior,
-    cauchy_scale,
+    disp_scale,
     re_prior,
     logfile,
 ):
@@ -57,6 +57,7 @@ def run_birdman(
     birdman_logger.addHandler(sh)
 
     cmdstanpy_logger = cmdstanpy.utils.get_logger()
+    cmdstanpy_logger.setLevel(logging.DEBUG)
     cmdstanpy_logger.addHandler(fh)
     for h in cmdstanpy_logger.handlers:
         h.setFormatter(formatter)
@@ -66,7 +67,7 @@ def run_birdman(
         ABXModelSingle,
         num_chunks=num_chunks,
         beta_prior=beta_prior,
-        cauchy_scale=cauchy_scale,
+        disp_scale=disp_scale,
         subj_prior=re_prior,
         chains=chains,
         num_iter=num_iter,

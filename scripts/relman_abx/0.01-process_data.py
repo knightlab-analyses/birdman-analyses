@@ -38,7 +38,7 @@ samp_map = {x: f"S{x}" for x in tbl.ids()}
 tbl.update_ids(samp_map)
 md.index = "S" + md.index
 
-feat_map = {x: f"F_{x}" for x in tbl.ids("observation")}
+feat_map = {x: f"F{x}" for x in tbl.ids("observation")}
 tbl.update_ids(feat_map, "observation")
 
 # Save results
