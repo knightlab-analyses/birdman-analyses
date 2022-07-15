@@ -8,5 +8,6 @@ data/
 *.hpp
 src/*/stan/*model
 src/*/stan/*model_single
+src/*/stan/*_single
 tags
 *.egg-info/
