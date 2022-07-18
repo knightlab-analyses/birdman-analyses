@@ -10,3 +10,4 @@ src/*/stan/*model
 src/*/stan/*model_single
 tags
 *.egg-info/
+src/*/stan/*_single
