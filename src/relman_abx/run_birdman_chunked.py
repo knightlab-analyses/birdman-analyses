@@ -42,7 +42,7 @@ def run_birdman(
     re_prior,
     logfile,
 ):
-    birdman_logger = setup_logger(logfile)
+    birdman_logger = setup_loggers(logfile)
 
     model_iter = ModelIterator(
         TABLE,
