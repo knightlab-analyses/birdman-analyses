@@ -7,6 +7,8 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=8G
 
+import os
+
 import biom
 import numpy as np
 import pandas as pd
@@ -81,3 +83,16 @@ md.to_csv("data/obesity/processed/processed_md.tsv", sep="\t", index=True)
 genus_counts = tbl_df["g"].value_counts().loc[collapsed_df.index]
 genus_counts.name = "count"
 genus_counts.to_csv("results/obesity/genus_counts.tsv", sep="\t", index=True)
+
+study_dir = "data/obesity/processed/study_tables"
+os.makedirs(study_dir, exist_ok=True)
+for study, study_md in md.groupby("study_id"):
+    idx = study_md.index
+    tbl_study = collapsed_tbl.filter(idx, inplace=False)
+    tbl_study.remove_empty()
+    outpath = os.path.join(study_dir, f"{study}_tbl.genus.biom")
+
+    with biom.util.biom_open(outpath, "w") as f:
+        tbl_study.to_hdf5(f, "filt")
+
+    print(f"{study}: {tbl_study.shape}")
