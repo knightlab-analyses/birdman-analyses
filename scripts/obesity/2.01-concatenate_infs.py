@@ -8,10 +8,12 @@
 #SBATCH --mem=32G
 
 import glob
+import json
 
 import arviz as az
 import biom
 from birdman.model_util import concatenate_inferences
+import numpy as np
 import xarray as xr
 
 tbl = biom.load_table("data/obesity/processed/processed_tbl.genus.biom")
@@ -29,3 +31,31 @@ all_inf = concatenate_inferences(
     concatenation_name="feature"
 )
 all_inf.to_netcdf("results/obesity/inf.genus2.nc")
+
+# Save parameters for use in data-driven simulation
+
+base_phis = (
+    all_inf.posterior["base_phi"]
+    .stack(sample=["chain", "draw"])
+    .median("sample")
+    .values
+)
+np.save("results/obesity/base_phis.npy", base_phis)
+
+batch_disps = (
+    all_inf.posterior["study_disp"]
+    .stack(sample=["chain", "draw"])
+    .median("sample")
+    .values
+    .ravel()
+)
+np.save("results/obesity/batch_disps.npy", batch_disps)
+
+batch_offsets = (
+    all_inf.posterior["study_re"]
+    .stack(sample=["chain", "draw"])
+    .median("sample")
+    .values
+    .ravel()
+)
+np.save("results/obesity/batch_offsets.npy", batch_offsets)
