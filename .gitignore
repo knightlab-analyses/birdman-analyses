@@ -12,4 +12,6 @@ src/*/stan/*_single
 tags
 *.egg-info/
 src/*/stan/*_single
+src/*/stan/*simulation
+src/*/stan/*regression
 *.o
