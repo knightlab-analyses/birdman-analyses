@@ -19,7 +19,7 @@ LOGDIR="results/batch/log"
 mkdir -p $OUTDIR
 mkdir -p $LOGDIR
 
-NUM_SAMPS=100
+NUM_SAMPS=300
 NUM_FEATS=10
 MEAN_DEPTH=5000
 BETA_0=-8

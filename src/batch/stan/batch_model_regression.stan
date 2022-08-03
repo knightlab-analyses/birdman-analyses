@@ -26,8 +26,8 @@ transformed parameters {
   }
 }
 model {
-  beta_0 ~ normal(-5, 2);
-  beta_1 ~ normal(0, 3);
+  beta_0 ~ normal(-6, 3);
+  beta_1 ~ normal(0, 5);
 
   inv_disp ~ lognormal(0, 0.5);
   batch_disps ~ lognormal(0, 0.5);
