@@ -8,6 +8,7 @@
 #SBATCH --time=2:00:00
 
 library(biomformat)
+library(jsonlite)
 library(DESeq2)
 
 tbl_file <- "results/batch/sim/sim_counts.biom"
@@ -22,9 +23,13 @@ samples <- colnames(tbl)
 md <- subset(md, rownames(md) %in% samples)
 sample_order <- row.names(md)
 
+params <- jsonlite::read_json("results/batch/sim/params.json")
+log_depths <- unlist(params$log_depths)
+md$log_depths <- log_depths
+
 tbl <- tbl[, sample_order]
 
-design_formula <- as.formula("~case_ctrl")
+design_formula <- as.formula("~case_ctrl + log_depths")
 
 dds <- DESeq2::DESeqDataSetFromMatrix(
     countData=tbl,

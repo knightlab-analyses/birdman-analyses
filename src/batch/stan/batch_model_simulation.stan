@@ -9,7 +9,7 @@ data {
   int num_batches;
   array[N] int<lower=1, upper=num_batches> batch_map;
   matrix[num_batches, D] batch_offsets;
-  matrix[num_batches, D] batch_disps;
+  matrix<lower=0>[num_batches, D] batch_disps;
 }
 parameters {
 }
@@ -32,10 +32,13 @@ generated quantities {
     vector[N] lam = x*beta_var + log_depths;
     array[N] real alpha;
 
+    print(d);
     for (n in 1:N) {
+      print(lam[n]);
       lam[n] += batch_offsets[batch_map[n], d];
       alpha[n] = inv_disp[d] + batch_disps[batch_map[n], d];
     }
+    print("Oh shit");
     sim_counts[d] = neg_binomial_2_log_rng(lam, alpha);
     big_lam[d] = lam;
     big_alpha[d] = to_vector(alpha);

@@ -8,8 +8,8 @@ data {
   array[N] int<lower=1, upper=num_batches> batch_map;
 }
 parameters {
-  real beta_0;
-  real beta_1;
+  real<offset=-6, multiplier=3> beta_0;
+  real<multiplier=5> beta_1;
   real<lower=0> inv_disp;
 
   array[num_batches] real<lower=0> batch_disps;
@@ -29,8 +29,8 @@ model {
   beta_0 ~ normal(-6, 3);
   beta_1 ~ normal(0, 5);
 
-  inv_disp ~ lognormal(0, 0.5);
-  batch_disps ~ lognormal(0, 0.5);
+  inv_disp ~ lognormal(0, 1);
+  batch_disps ~ lognormal(0, 1);
 
   y ~ neg_binomial_2_log(lam, inv(alpha));
 }

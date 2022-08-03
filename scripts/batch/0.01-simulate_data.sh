@@ -26,9 +26,6 @@ BETA_0=-8
 BETA_1=2
 NUM_BATCHES=10
 LOGNORMAL_SD=0.2
-INV_DISP=-2
-INV_DISP_SD=0.5
-BATCH_DISP_SD=0.2
 
 LOGFILE="${LOGDIR}/sim.log"
 
@@ -41,7 +38,4 @@ python src/batch/simulate_data.py \
     --lognormal-depth-sd $LOGNORMAL_SD \
     --beta-0 $BETA_0 1 \
     --beta-1 $BETA_1 1 \
-    --num-batches $NUM_BATCHES \
-    --batch-offset-sd 2 \
-    --inv-disp $INV_DISP $INV_DISP_SD \
-    --batch-disp-sd $BATCH_DISP_SD
+    --num-batches $NUM_BATCHES

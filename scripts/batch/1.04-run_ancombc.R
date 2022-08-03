@@ -9,6 +9,7 @@
 
 library(ANCOMBC)
 library(biomformat)
+library(jsonlite)
 library(phyloseq)
 
 tbl_file <- "results/batch/sim/sim_counts.biom"
@@ -23,19 +24,28 @@ samples <- colnames(tbl)
 md <- subset(md, rownames(md) %in% samples)
 sample_order <- row.names(md)
 
+params <- jsonlite::read_json("results/batch/sim/params.json")
+log_depths <- unlist(params$log_depths)
+md$log_depths <- log_depths
+
 tbl <- tbl[, sample_order]
 
 taxa <- phyloseq::otu_table(tbl, taxa_are_rows=T)
 meta <- phyloseq::sample_data(md)
 physeq <- phyloseq::phyloseq(taxa, meta)
 
-design_formula <- "case_ctrl"
+design_formula <- "case_ctrl + log_depths"
 
 ancombc.results <- ANCOMBC::ancombc(phyloseq=physeq, formula=design_formula,
                                     zero_cut=1.0)
 column_names <- unlist(as.vector(attributes(ancombc.results$res)))
-results <- as.data.frame(ancombc.results$res)
-colnames(results) <- column_names
+beta_res <- as.data.frame(ancombc.results$res$beta)
+colnames(beta_res) <- paste0(colnames(beta_res), "_beta")
+
+q_res <- as.data.frame(ancombc.results$res$q_val)
+colnames(q_res) <- paste0(colnames(q_res), "_qval")
+
+results <- cbind(beta_res, q_res)
 
 outfile <- "results/batch/ancombc_results.tsv"
 write.table(results, file=outfile, sep="\t")

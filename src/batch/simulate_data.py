@@ -12,7 +12,9 @@ import pandas as pd
 from src.logger import setup_loggers
 
 rng = np.random.default_rng(63)
-
+batch_offset_file = "results/obesity/batch_offsets.npy"
+batch_disp_file = "results/obesity/batch_disps.npy"
+base_phi_file = "results/obesity/base_phis.npy"
 
 @click.command()
 @click.option("--sim-output", required=True)
@@ -24,9 +26,6 @@ rng = np.random.default_rng(63)
 @click.option("--beta-0", type=(float, float))
 @click.option("--beta-1", type=(float, float))
 @click.option("--num-batches", type=int)
-@click.option("--batch-offset-sd", type=float)
-@click.option("--inv-disp", type=(float, float))
-@click.option("--batch-disp-sd", type=float)
 def simulate(
     sim_output,
     logfile,
@@ -37,9 +36,6 @@ def simulate(
     beta_0,
     beta_1,
     num_batches,
-    batch_offset_sd,
-    inv_disp,
-    batch_disp_sd
 ):
     birdman_logger = setup_loggers(logfile)
 
@@ -49,11 +45,17 @@ def simulate(
     sim_model = cmdstanpy.CmdStanModel(stan_file=sim_model_path)
 
     batches = np.arange(num_batches) + 1
-    batch_offsets = rng.normal(0, batch_offset_sd,
-                               size=(num_batches, num_features))
-    batch_disps = rng.lognormal(0, batch_disp_sd,
-                                size=(num_batches, num_features))
     batch_map = rng.choice(batches, size=num_samples)
+
+    batch_offsets = np.load(batch_offset_file)
+    batch_disps = np.load(batch_disp_file)
+    base_phis = np.load(base_phi_file)
+
+    batch_offsets = rng.choice(batch_offsets, (num_batches, num_features),
+                               replace=False)
+    batch_disps = rng.choice(batch_disps, (num_batches, num_features),
+                             replace=False)
+    inv_disps = rng.choice(base_phis, num_features, replace=False)
 
     mu = rng.lognormal(np.log(mean_depth), lognormal_depth_sd, size=num_samples)
     log_depths = np.log(rng.poisson(mu))
@@ -61,10 +63,6 @@ def simulate(
 
     beta_0 = rng.normal(beta_0[0], beta_0[1], size=num_features)
     beta_1 = rng.normal(beta_1[0], beta_1[1], size=num_features)
-
-    inv_disps = rng.lognormal(inv_disp[0], inv_disp[1], size=num_features)
-    print(inv_disps)
-    print(batch_disps)
 
     data = {
         "N": num_samples,
@@ -88,6 +86,12 @@ def simulate(
 
     sim_counts = sim_fit.stan_variable("sim_counts").squeeze()
     sim_counts = sim_counts.astype(int)
+
+    big_alpha = sim_fit.stan_variable("big_alpha").squeeze()
+    big_lam = sim_fit.stan_variable("big_lam").squeeze()
+
+    np.save("results/batch/sim/big_alpha.npy", big_alpha)
+    np.save("results/batch/sim/big_lam.npy", big_lam)
 
     columns = ["class_A", "class_B"]
     controls = [f"SA{x+1}" for x in range(int(num_samples/2))]
