@@ -35,7 +35,6 @@ generated quantities {
     for (n in 1:N) {
       lam[n] += batch_offsets[batch_map[n], d];
       alpha[n] = inv_disp[d] + batch_disps[batch_map[n], d];
-      # sim_counts[d, n] = neg_binomial_2_log_rng(log(5), 0.1);
     }
     sim_counts[d] = neg_binomial_2_log_rng(lam, alpha);
     big_lam[d] = lam;

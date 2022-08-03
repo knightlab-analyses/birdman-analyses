@@ -30,13 +30,10 @@ INV_DISP=-2
 INV_DISP_SD=0.5
 BATCH_DISP_SD=0.2
 
-SIM_OUTPUT="${OUTDIR}/sim_counts.biom"
-REG_OUTPUT="${OUTDIR}/reg_counts.nc"
 LOGFILE="${LOGDIR}/sim.log"
 
 python src/batch/simulate_data.py \
-    --sim-output $SIM_OUTPUT \
-    --reg-output $REG_OUTPUT \
+    --sim-output $OUTDIR \
     --logfile $LOGFILE \
     --num-samples $NUM_SAMPS \
     --num-features $NUM_FEATS \

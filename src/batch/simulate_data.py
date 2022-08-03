@@ -1,3 +1,5 @@
+import json
+import os
 from pkg_resources import resource_filename
 
 import arviz as az
@@ -14,7 +16,6 @@ rng = np.random.default_rng(63)
 
 @click.command()
 @click.option("--sim-output", required=True)
-@click.option("--reg-output", required=True)
 @click.option("--logfile", required=True)
 @click.option("--num-samples", type=int)
 @click.option("--num-features", type=int)
@@ -28,7 +29,6 @@ rng = np.random.default_rng(63)
 @click.option("--batch-disp-sd", type=float)
 def simulate(
     sim_output,
-    reg_output,
     logfile,
     num_samples,
     num_features,
@@ -89,33 +89,6 @@ def simulate(
     sim_counts = sim_fit.stan_variable("sim_counts").squeeze()
     sim_counts = sim_counts.astype(int)
 
-    big_lam = sim_fit.stan_variable("big_lam").squeeze()
-    big_alpha = sim_fit.stan_variable("big_alpha").squeeze()
-
-    samp_ids = [f"S{x+1}" for x in range(num_samples)]
-    feat_ids = [f"F{x+1}" for x in range(num_features)]
-    tbl = biom.Table(
-        sim_counts,
-        sample_ids=samp_ids,
-        observation_ids=feat_ids
-    )
-
-    big_alpha = pd.DataFrame(big_alpha)
-    big_alpha.columns = samp_ids
-    big_alpha.index = feat_ids
-    big_alpha.to_csv("results/batch/sim/big_alpha.tsv", sep="\t", index=True)
-
-    big_lam = pd.DataFrame(big_lam)
-    big_lam.columns = samp_ids
-    big_lam.index = feat_ids
-    big_lam.to_csv("results/batch/sim/big_lam.tsv", sep="\t", index=True)
-
-    # print(tbl.sum("sample"))
-    # print(tbl.sum("observation"))
-
-    with biom.util.biom_open(sim_output, "w") as f:
-        tbl.to_hdf5(f, "sim")
-
     columns = ["class_A", "class_B"]
     controls = [f"SA{x+1}" for x in range(int(num_samples/2))]
     cases = [f"SB{x+1}" for x in range(int(num_samples/2))]
@@ -129,42 +102,27 @@ def simulate(
     })
     metadata.index = samples
     birdman_logger.info(f"\n{metadata.head()}")
-    metadata.to_csv("results/batch/sim/metadata.tsv", sep="\t", index=True)
 
-    x = metadata[["intercept", "case_ctrl"]].values
+    metadata_out = os.path.join(sim_output, "metadata.tsv")
+    metadata.to_csv(metadata_out, sep="\t", index=True)
 
-    # reg_model_path = resource_filename(
-    #     "src", "sampling_depth/stan/depth_model_regression_single.stan"
-    # )
-    # reg_model = cmdstanpy.CmdStanModel(stan_file=reg_model_path)
+    feat_ids = [f"F{x+1}" for x in range(num_features)]
+    tbl = biom.Table(
+        sim_counts,
+        sample_ids=samples,
+        observation_ids=feat_ids
+    )
 
-    # reg_data = {
-    #     "N": num_samples,
-    #     "log_depths": log_depths,
-    #     "counts": sim_counts,
-    #     "x": x
-    # }
+    tbl_out = os.path.join(sim_output, "sim_counts.biom")
+    with biom.util.biom_open(tbl_out, "w") as f:
+        tbl.to_hdf5(f, "sim")
 
-    # reg = reg_model.sample(
-    #     data=reg_data,
-    #     iter_sampling=500,
-    #     iter_warmup=1000,
-    #     chains=4,
-    #     seed=63
-    # )
-    # reg_inf = az.from_cmdstanpy(
-    #     posterior=reg,
-    #     dims={
-    #         "beta_var": ["column"],
-    #         "lam": ["tbl_sample"]
-    #     },
-    #     coords={
-    #         "column": ["Intercept", "beta_case"],
-    #         "tbl_sample": samples
-    #     }
-    # )
-    # birdman_logger.info(f"{az.rhat(reg_inf)}")
-    # reg_inf.to_netcdf(reg_output)
+    params_out = os.path.join(sim_output, "params.json")
+    with open(params_out, "w") as f:
+        for k, v in data.items():
+            if isinstance(v, np.ndarray):
+                data[k] = v.tolist()
+        json.dump(data, f)
 
 
 if __name__ == "__main__":
