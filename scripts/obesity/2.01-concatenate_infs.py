@@ -19,7 +19,7 @@ tbl = biom.load_table("data/obesity/processed/processed_tbl.genus.biom")
 concatenation_name = "feature"
 coords = {"feature": tbl.ids(axis="observation")}
 
-inf_dir = "/panfs/grahman/birdman-analyses-final/obesity/inferences_genus"
+inf_dir = "/panfs/grahman/birdman-analyses-final/obesity/inferences_genus_2"
 inf_file_list = sorted(glob.glob(f"{inf_dir}/*.nc"))
 inf_list = [az.from_netcdf(x) for x in inf_file_list]
 
@@ -28,4 +28,4 @@ all_inf = concatenate_inferences(
     coords=coords,
     concatenation_name="feature"
 )
-all_inf.to_netcdf("results/obesity/inf.genus.nc")
+all_inf.to_netcdf("results/obesity/inf.genus2.nc")

@@ -48,7 +48,7 @@ depths = collapsed_df.sum(axis=0)
 samps_to_keep = depths[depths >= d].index
 collapsed_df = collapsed_df.loc[:, samps_to_keep]
 
-# Remove genera present in fewer than 4 studies
+# Remove genera present in fewer than N studies
 collapsed_df_joined = collapsed_df.T.join(md)
 study_presence = (
     collapsed_df_joined
@@ -57,7 +57,7 @@ study_presence = (
     .clip(upper=1)
     .sum()
 )
-feats_to_keep = study_presence[study_presence >= 4].index
+feats_to_keep = study_presence[study_presence >= 2].index
 collapsed_df = collapsed_df.loc[feats_to_keep]
 
 collapsed_tbl = biom.Table(

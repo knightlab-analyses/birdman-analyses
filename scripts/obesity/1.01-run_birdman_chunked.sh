@@ -17,7 +17,7 @@ source ~/miniconda3/bin/activate birdman-analyses-final
 
 echo Chunk $SLURM_ARRAY_TASK_ID / $SLURM_ARRAY_TASK_MAX
 
-OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/inferences_genus"
+OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/inferences_genus_2"
 LOGDIR="results/obesity/log"
 
 mkdir -p $OUTDIR
