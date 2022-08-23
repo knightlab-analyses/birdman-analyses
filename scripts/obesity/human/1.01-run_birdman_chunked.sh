@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/mouse/%x.%a.out
+#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/human/%x.%a.out
 #SBATCH --partition=short
 #SBATCH --mem=8G
 #SBATCH --nodes=1
@@ -17,11 +17,11 @@ source ~/miniconda3/bin/activate birdman-analyses-final
 
 echo Chunk $SLURM_ARRAY_TASK_ID / $SLURM_ARRAY_TASK_MAX
 
-OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/mouse/inferences_genus"
-LOGDIR="results/obesity/log/mouse"
-TBL="data/obesity/processed/tbl_merged.genus.biom"
-MD="data/obesity/processed/metadata.merged.tsv"
-FORMULA="C(diet, Treatment('Standard')) + instrument"
+OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/human/inferences_genus"
+LOGDIR="results/obesity/log/human"
+TBL="data/obesity/processed/human/processed_tbl.genus.biom"
+MD="data/obesity/processed/human/processed_md.tsv"
+FORMULA="C(obese, Treatment('Lean'))"
 
 mkdir -p $OUTDIR
 mkdir -p $LOGDIR

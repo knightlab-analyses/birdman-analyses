@@ -7,8 +7,6 @@ import pandas as pd
 
 PROJ_DIR = "/home/grahman/projects/birdman-analyses-final"
 MODEL_PATH = resource_filename("src", "obesity/stan/model_single.stan")
-MD = pd.read_table(f"{PROJ_DIR}/data/obesity/processed/processed_md.tsv",
-                   sep="\t", index_col=0)
 
 
 class ModelSingle(SingleFeatureModel):
@@ -16,6 +14,8 @@ class ModelSingle(SingleFeatureModel):
         self,
         table: biom.Table,
         feature_id: str,
+        metadata: pd.DataFrame,
+        formula: str,
         beta_prior: float = 3.0,
         disp_scale: float = 0.5,
         study_prior: float = 2.0,
@@ -32,13 +32,11 @@ class ModelSingle(SingleFeatureModel):
             **kwargs
         )
 
+        MD = metadata
         study_series = MD["study_id"].loc[self.sample_names]
         samp_study_map = study_series.astype("category").cat.codes + 1
         self.studies = np.sort(study_series.unique())
 
-        formula = (
-            "C(diet, Treatment('Standard')) + instrument"
-        )
         self.create_regression(formula, MD)
 
         D = table.shape[0]

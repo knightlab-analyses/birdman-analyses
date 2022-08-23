@@ -13,16 +13,14 @@ import pandas as pd
 from src.logger import setup_loggers
 from src.obesity.model_single import ModelSingle
 
-PROJ_DIR = "/home/grahman/projects/birdman-analyses-final"
-TABLE_FILE = f"{PROJ_DIR}/data/obesity/processed/processed_tbl.genus.biom"
-TABLE = biom.load_table(TABLE_FILE)
-FIDS = TABLE.ids(axis="observation")
-
 
 @click.command()
 @click.option("--inference-dir", required=True)
 @click.option("--num-chunks", required=True, type=int)
 @click.option("--chunk-num", required=True, type=int)
+@click.option("--table", required=True, type=click.Path())
+@click.option("--metadata", required=True, type=click.Path())
+@click.option("--formula", required=True, type=str)
 @click.option("--chains", default=4)
 @click.option("--num-iter", default=500)
 @click.option("--num-warmup", default=1000)
@@ -34,6 +32,9 @@ def run_birdman(
     inference_dir,
     num_chunks,
     chunk_num,
+    table,
+    metadata,
+    formula,
     chains,
     num_iter,
     num_warmup,
@@ -44,9 +45,15 @@ def run_birdman(
 ):
     birdman_logger = setup_loggers(logfile)
 
+    table = biom.load_table(table)
+    FIDS = table.ids(axis="observation")
+    md = pd.read_table(metadata, sep="\t", index_col=0)
+
     model_iter = ModelIterator(
-        TABLE,
+        table,
         ModelSingle,
+        metadata=md,
+        formula=formula,
         num_chunks=num_chunks,
         beta_prior=beta_prior,
         disp_scale=disp_scale,

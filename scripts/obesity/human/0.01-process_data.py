@@ -71,6 +71,7 @@ tbl_77.remove_empty()
 
 cols = ["obese", "qiita_study_id"]
 concat_md = pd.concat([md_77[cols], md_12879_first[cols]])
+concat_md = concat_md.rename(columns={"qiita_study_id": "study_id"})
 concat_tbl = tbl_12879.merge(tbl_77, observation="intersection")
 concat_tbl.remove_empty()
 concat_tbl_df = concat_tbl.to_dataframe(dense=True)
