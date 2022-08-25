@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/%x.%a.out
+#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/human/%x.%a.out
 #SBATCH --partition=short
 #SBATCH --mem=8G
 #SBATCH --nodes=1
@@ -17,8 +17,11 @@ source ~/miniconda3/bin/activate birdman-analyses-final
 
 echo Chunk $SLURM_ARRAY_TASK_ID / $SLURM_ARRAY_TASK_MAX
 
-OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/inferences_genus_2"
-LOGDIR="results/obesity/log"
+OUTDIR="/panfs/grahman/birdman-analyses-final/obesity/human/inferences_genus"
+LOGDIR="results/obesity/log/human"
+TBL="data/obesity/processed/human/processed_tbl.genus.biom"
+MD="data/obesity/processed/human/processed_md.tsv"
+FORMULA="C(obese, Treatment('Lean'))"
 
 mkdir -p $OUTDIR
 mkdir -p $LOGDIR
@@ -28,6 +31,9 @@ time python src/obesity/run_birdman_chunked.py \
     --inference-dir $OUTDIR \
     --num-chunks $SLURM_ARRAY_TASK_MAX \
     --chunk-num $SLURM_ARRAY_TASK_ID \
+    --table $TBL \
+    --metadata $MD \
+    --formula "${FORMULA}" \
     --chains 4 \
     --num-iter 500 \
     --num-warmup 1000 \

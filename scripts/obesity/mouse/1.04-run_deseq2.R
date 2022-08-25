@@ -1,6 +1,6 @@
 #!/home/grahman/miniconda3/envs/da-R/bin/Rscript
 #SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/%x.out
+#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/mouse/%x.out
 #SBATCH --partition=short
 #SBATCH --mem=8G
 #SBATCH --nodes=1
@@ -11,11 +11,11 @@ library(biomformat)
 library(dplyr)
 library(DESeq2)
 
-tbl_file <- "data/obesity/processed/processed_tbl.genus.biom"
+tbl_file <- "data/obesity/processed/mouse/tbl_merged.genus.biom"
 tbl <- biomformat::read_biom(tbl_file)
 tbl <- as.matrix(biomformat::biom_data(tbl))
 
-md_file <- "data/obesity/processed/processed_md.tsv"
+md_file <- "data/obesity/processed/mouse/metadata.merged.tsv"
 md <- read.table(md_file, sep="\t", row.names=1, header=T)
 md$diet <- relevel(as.factor(md$diet), "Standard")
 md$instrument <- relevel(as.factor(md$instrument), "Illumina")
@@ -44,5 +44,5 @@ results <- DESeq2::results(
 row.names(results) <- results$row
 results <- results %>% select(-c("row"))
 
-outfile <- "results/obesity/deseq2_results.tsv"
+outfile <- "results/obesity/mouse/deseq2_results.tsv"
 write.table(results, file=outfile, sep="\t")

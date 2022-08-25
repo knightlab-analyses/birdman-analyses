@@ -1,6 +1,6 @@
 #!/home/grahman/miniconda3/envs/birdman-analyses-final/bin/python
 #SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/%x.out
+#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/obesity/mouse/%x.out
 #SBATCH --partition=short
 #SBATCH --time=1:00:00
 #SBATCH --nodes=1
@@ -74,15 +74,15 @@ md.loc[na_samps.index, "diet"] = [
 ]
 
 # Save results
-tbl_out_file = "data/obesity/processed/processed_tbl.genus.biom"
+tbl_out_file = "data/obesity/processed/mouse/processed_tbl.genus.biom"
 with biom.util.biom_open(tbl_out_file, "w") as f:
     collapsed_tbl.to_hdf5(f, "merge")
 
-md.to_csv("data/obesity/processed/processed_md.tsv", sep="\t", index=True)
+md.to_csv("data/obesity/processed/mouse/processed_md.tsv", sep="\t", index=True)
 
 genus_counts = tbl_df["g"].value_counts().loc[collapsed_df.index]
 genus_counts.name = "count"
-genus_counts.to_csv("results/obesity/genus_counts.tsv", sep="\t", index=True)
+genus_counts.to_csv("results/obesity/mouse/genus_counts.tsv", sep="\t", index=True)
 
 study_dir = "data/obesity/processed/study_tables"
 os.makedirs(study_dir, exist_ok=True)
