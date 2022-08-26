@@ -123,4 +123,4 @@ concat_md.to_csv(md_out_file, sep="\t", index=True)
 
 genus_counts = concat_tbl_df["g"].value_counts().loc[collapsed_df.index]
 genus_counts.name = "count"
-genus_counts.to_csv("results/obesity/genus_counts.human.tsv", sep="\t", index=True)
+genus_counts.to_csv("results/obesity/human/genus_counts.human.tsv", sep="\t", index=True)
