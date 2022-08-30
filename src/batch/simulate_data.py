@@ -12,9 +12,9 @@ import pandas as pd
 from src.logger import setup_loggers
 
 rng = np.random.default_rng(63)
-batch_offset_file = "results/obesity/batch_offsets.npy"
-batch_disp_file = "results/obesity/batch_disps.npy"
-base_phi_file = "results/obesity/base_phis.npy"
+batch_offset_file = "results/obesity/mouse/batch_offsets.npy"
+batch_disp_file = "results/obesity/mouse/batch_disps.npy"
+base_phi_file = "results/obesity/mouse/base_phis.npy"
 
 @click.command()
 @click.option("--sim-output", required=True)
