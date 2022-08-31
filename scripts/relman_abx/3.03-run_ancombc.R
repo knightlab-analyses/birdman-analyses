@@ -34,6 +34,10 @@ design_formula <- "antibiotic + host_subject_id"
 ancombc.results <- ANCOMBC::ancombc(phyloseq=physeq, formula=design_formula,
                                     zero_cut=1.0)
 results_beta <- as.data.frame(ancombc.results$res$beta)
+results_qval <- as.data.frame(ancombc.results$res$q_val)
 
 outfile_beta <- "results/relman_abx/ancombc_results_beta.tsv"
 write.table(results_beta, file=outfile_beta, sep="\t")
+
+outfile_qval <- "results/relman_abx/ancombc_results_qval.tsv"
+write.table(results_qval, file=outfile_qval, sep="\t")
