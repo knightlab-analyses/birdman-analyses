@@ -16,12 +16,12 @@ from birdman.model_util import concatenate_inferences
 import numpy as np
 import xarray as xr
 
-tbl = biom.load_table("data/tcga/processed/processed_tbl.fungi.biom")
+tbl = biom.load_table("data/tcga/processed/species/processed_tbl.bacteria.biom")
 
 concatenation_name = "feature"
 coords = {"feature": tbl.ids(axis="observation")}
 
-inf_dir = "/panfs/grahman/birdman-analyses-final/tcga/WIS_bacteria_fungi"
+inf_dir = "/panfs/grahman/birdman-analyses-final/tcga/species/bacteria"
 inf_file_list = sorted(glob.glob(f"{inf_dir}/*.nc"))
 inf_list = [az.from_netcdf(x) for x in inf_file_list]
 
@@ -30,4 +30,4 @@ all_inf = concatenate_inferences(
     coords=coords,
     concatenation_name="feature"
 )
-all_inf.to_netcdf("results/tcga/inf.fungi.nc")
+all_inf.to_netcdf("results/tcga/species/inf.bacteria.nc")

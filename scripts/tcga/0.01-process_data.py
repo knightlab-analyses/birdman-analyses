@@ -11,7 +11,7 @@ import biom
 import numpy as np
 import pandas as pd
 
-tbl_file = "data/tcga/raw/WIS_immune_rep200_counts_fungi_all_primary_tumors.biom"
+tbl_file = "data/tcga/raw/species/immune_rep200_counts_bacteria_all_primary_tumors.biom"
 tbl = biom.load_table(tbl_file)
 
 md_file = "data/tcga/raw/metadata_immune_WGS_AllSeqCenters_Primary_Tumor.txt"
@@ -34,7 +34,7 @@ tbl.filter(samps_in_common)
 md = md.loc[samps_in_common]
 
 # Filter observations by prevalence
-n = 10
+n = 100
 prevalence = tbl.pa(inplace=False).sum(axis="observation")
 feats_to_keep = tbl.ids(axis="observation")[np.where(prevalence >= n)]
 tbl.filter(ids_to_keep=feats_to_keep, axis="observation")
@@ -57,7 +57,7 @@ md = md[md["investigation"].isin(invest_to_keep)]
 tbl.filter(md.index)
 
 # Save results
-tbl_out_file = "data/tcga/processed/processed_tbl.fungi.biom"
+tbl_out_file = "data/tcga/processed/species/processed_tbl.bacteria.biom"
 with biom.util.biom_open(tbl_out_file, "w") as f:
     tbl.to_hdf5(f, "merge")
 

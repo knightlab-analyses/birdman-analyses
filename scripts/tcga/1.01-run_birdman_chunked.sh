@@ -17,9 +17,9 @@ source ~/miniconda3/bin/activate birdman-analyses-final
 
 echo Chunk $SLURM_ARRAY_TASK_ID / $SLURM_ARRAY_TASK_MAX
 
-OUTDIR="/panfs/grahman/birdman-analyses-final/tcga/WIS_bacteria_fungi"
-LOGDIR="results/tcga/log/WIS_bacteria_fungi"
-TBL="data/tcga/processed/processed_tbl.fungi.biom"
+OUTDIR="/panfs/grahman/birdman-analyses-final/tcga/species/bacteria"
+LOGDIR="results/tcga/log/species/bacteria"
+TBL="data/tcga/processed/species/processed_tbl.bacteria.biom"
 MD="data/tcga/processed/processed_md.tsv"
 FORMULA="C(investigation, Treatment('TCGA-BRCA')) + race + gender"
 
