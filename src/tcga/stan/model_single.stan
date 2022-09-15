@@ -16,12 +16,12 @@ data {
 }
 
 parameters {
-  real<offset=A, multiplier=2> beta_0;
+  real<offset=A, multiplier=4> beta_0;
   vector[p-1] beta_x;
   real<lower=0> base_phi;
-  vector<lower=0>[num_center] center_disp;
 
-  vector[num_center] center_re;
+  vector<lower=0>[num_center] center_disp;
+  matrix[num_center, p] center_re;
 }
 
 transformed parameters {
@@ -30,21 +30,26 @@ transformed parameters {
   vector[N] lam = x * beta_var;
 
   for (n in 1:N) {
-    int center = center_map[n];
+    lam[n] = depth[n];
 
-    lam[n] += depth[n] + center_re[center];
+    int center = center_map[n];
     transformed_phi[n] = base_phi + center_disp[center];
+    for (i in 1:p) {
+      lam[n] += (beta_var[i] + center_re[center, i])*x[n, i];
+    }
   }
 }
 
 model {
-  beta_0 ~ normal(-8, 3);
+  beta_0 ~ normal(A, 4);
   beta_x ~ normal(0, B_p);
   base_phi ~ lognormal(log(10), disp_scale);
 
   for (i in 1:num_center) {
     center_disp[i] ~ lognormal(0, 1);
-    center_re[i] ~ normal(0, re_p);
+    for (j in 1:p) {
+      center_re[i, j] ~ normal(0, re_p);
+    }
   }
 
   y ~ neg_binomial_2_log(lam, inv(transformed_phi));

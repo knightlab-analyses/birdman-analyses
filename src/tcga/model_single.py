@@ -58,7 +58,7 @@ class ModelSingle(SingleFeatureModel):
             params=["beta_var", "base_phi", "center_re", "center_disp"],
             dims={
                 "beta_var": ["covariate"],
-                "center_re": ["center"],
+                "center_re": ["center", "covariate"],
                 "center_disp": ["center"],
                 "log_lhood": ["tbl_sample"],
                 "y_predict": ["tbl_sample"]
