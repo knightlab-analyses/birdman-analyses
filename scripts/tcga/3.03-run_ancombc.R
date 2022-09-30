@@ -11,11 +11,11 @@ library(ANCOMBC)
 library(biomformat)
 library(phyloseq)
 
-tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.biom"
+tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.2.biom"
 tbl <- biomformat::read_biom(tbl_file)
 tbl <- as.matrix(biomformat::biom_data(tbl))
 
-md_file <- "data/tcga/processed/processed_md.tsv"
+md_file <- "data/tcga/processed/processed_md.2.tsv"
 md <- read.delim(md_file, sep="\t", row.names=1, header=T)
 md$investigation <- gsub("TCGA-", "", md$investigation)
 md$investigation <- relevel(as.factor(md$investigation), "BRCA")
@@ -39,8 +39,8 @@ ancombc.results <- ANCOMBC::ancombc(phyloseq=physeq, formula=design.formula,
 results_beta <- as.data.frame(ancombc.results$res$beta)
 results_qval <- as.data.frame(ancombc.results$res$q_val)
 
-outfile_beta <- "results/tcga/ancombc_results_beta.tsv"
+outfile_beta <- "results/tcga/ancombc_results_beta.2.tsv"
 write.table(results_beta, file=outfile_beta, sep="\t")
 
-outfile_qval <- "results/tcga/ancombc_results_qval.tsv"
+outfile_qval <- "results/tcga/ancombc_results_qval.2.tsv"
 write.table(results_qval, file=outfile_qval, sep="\t")

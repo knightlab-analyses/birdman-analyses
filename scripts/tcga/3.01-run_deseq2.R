@@ -10,11 +10,11 @@
 library(biomformat)
 library(DESeq2)
 
-tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.biom"
+tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.2.biom"
 tbl <- biomformat::read_biom(tbl_file)
 tbl <- as.matrix(biomformat::biom_data(tbl))
 
-md_file <- "data/tcga/processed/processed_md.tsv"
+md_file <- "data/tcga/processed/processed_md.2.tsv"
 md <- read.delim(md_file, sep="\t", row.names=1, header=T)
 md$investigation <- gsub("TCGA-", "", md$investigation)
 md$investigation <- relevel(as.factor(md$investigation), "BRCA")
@@ -52,6 +52,6 @@ for (level in levels) {
         contrast=c("investigation", level, "BRCA")
     )
     row.names(results) <- results$row
-    outfile <- paste0("results/tcga/deseq2/", level, ".tsv")
+    outfile <- paste0("results/tcga/deseq2.2/", level, ".tsv")
     write.table(results, file=outfile, sep="\t")
 }

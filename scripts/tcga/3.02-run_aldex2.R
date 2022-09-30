@@ -10,11 +10,11 @@
 library(biomformat)
 library(DESeq2)
 
-tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.biom"
+tbl_file <- "data/tcga/processed/species/processed_tbl.bacteria.2.biom"
 tbl <- biomformat::read_biom(tbl_file)
 tbl <- as.matrix(biomformat::biom_data(tbl))
 
-md_file <- "data/tcga/processed/processed_md.tsv"
+md_file <- "data/tcga/processed/processed_md.2.tsv"
 md <- read.delim(md_file, sep="\t", row.names=1, header=T)
 md$investigation <- gsub("TCGA-", "", md$investigation)
 md$investigation <- relevel(as.factor(md$investigation), "BRCA")
@@ -33,5 +33,5 @@ mm <- model.matrix(design.formula, md)
 x <- ALDEx2::aldex.clr(tbl, mm)
 aldex2.results <- ALDEx2::aldex.glm(x)
 
-outfile <- "results/tcga/aldex2_results.tsv"
+outfile <- "results/tcga/aldex2_results.2.tsv"
 write.table(aldex2.results, file=outfile, sep="\t")

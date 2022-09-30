@@ -15,8 +15,8 @@ import pandas as pd
 
 FEAT_REGEX = re.compile("F\d{4}_(.*).nc")
 
-inference_dir = "/panfs/grahman/birdman-analyses-final/tcga/species/bacteria"
-outfile = "results/tcga/species/birdman_results.bacteria.tsv"
+inference_dir = "/panfs/grahman/birdman-analyses-final/tcga/species/bacteria2"
+outfile = "results/tcga/species/birdman_results.bacteria.2.tsv"
 all_inf_files = glob.glob(f"{inference_dir}/*.nc")
 
 def process_dataframe(df, feat_id, suffix=""):

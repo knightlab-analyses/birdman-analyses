@@ -34,7 +34,7 @@ tbl.filter(samps_in_common)
 md = md.loc[samps_in_common]
 
 # Filter observations by prevalence
-n = 100
+n = 50
 prevalence = tbl.pa(inplace=False).sum(axis="observation")
 feats_to_keep = tbl.ids(axis="observation")[np.where(prevalence >= n)]
 tbl.filter(ids_to_keep=feats_to_keep, axis="observation")
@@ -57,10 +57,10 @@ md = md[md["investigation"].isin(invest_to_keep)]
 tbl.filter(md.index)
 
 # Save results
-tbl_out_file = "data/tcga/processed/species/processed_tbl.bacteria.biom"
+tbl_out_file = "data/tcga/processed/species/processed_tbl.bacteria.2.biom"
 with biom.util.biom_open(tbl_out_file, "w") as f:
     tbl.to_hdf5(f, "merge")
 
-md.to_csv("data/tcga/processed/processed_md.tsv",
+md.to_csv("data/tcga/processed/processed_md.2.tsv",
           sep="\t",
           index=True)
