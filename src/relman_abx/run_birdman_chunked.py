@@ -72,7 +72,7 @@ def run_birdman(
             model.compile_model()
             model.fit_model(sampler_args={"output_dir": t})
 
-            inf = model.to_inference_object()
+            inf = model.to_inference()
             birdman_logger.info(inf.posterior)
 
             loo = az.loo(inf, pointwise=True)
