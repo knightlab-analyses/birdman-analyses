@@ -73,6 +73,10 @@ def run_birdman(
         tmpdir = f"{inference_dir}/tmp/F{feature_num_str}_{feature_id}"
         outfile = f"{inference_dir}/F{feature_num_str}_{feature_id}.nc"
 
+        if os.path.exists(outfile):
+            print("File exists - skipping")
+            continue
+
         os.makedirs(tmpdir, exist_ok=True)
 
         with TemporaryDirectory(dir=tmpdir) as t:
