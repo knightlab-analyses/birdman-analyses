@@ -1,6 +1,6 @@
-#!/home/grahman/miniconda3/envs/da-R/bin/Rscript
-#SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/batch/%x.out
+#!/home/lpatel/software/miniconda3/envs/ancombc2/bin/Rscript
+#SBATCH --chdir=/ddn_scratch/lpatel/projects/2024-07-17_q2-birdman/birdman-analyses-b2
+#SBATCH --output=/ddn_scratch/lpatel/projects/2024-07-17_q2-birdman/birdman-analyses-b2/slurm_out/batch/%x.out
 #SBATCH --partition=short
 #SBATCH --mem=8G
 #SBATCH --nodes=1
@@ -36,16 +36,23 @@ physeq <- phyloseq::phyloseq(taxa, meta)
 
 design_formula <- "case_ctrl + log_depths"
 
-ancombc.results <- ANCOMBC::ancombc(phyloseq=physeq, formula=design_formula,
-                                    zero_cut=1.0)
-column_names <- unlist(as.vector(attributes(ancombc.results$res)))
-beta_res <- as.data.frame(ancombc.results$res$beta)
+ancombc.results <- ANCOMBC::ancombc2(data = physeq, 
+                                     fix_formula = design_formula,
+                                     prv_cut = 0.0)
+
+taxon_names <- ancombc.results$res$taxon
+
+lfc_cols <- grep("^lfc_", names(ancombc.results$res), value = TRUE)
+beta_res <- as.data.frame(ancombc.results$res[, lfc_cols])
 colnames(beta_res) <- paste0(colnames(beta_res), "_beta")
 
-q_res <- as.data.frame(ancombc.results$res$q_val)
+q_cols <- grep("^q_", names(ancombc.results$res), value = TRUE)
+q_res <- as.data.frame(ancombc.results$res[, q_cols])
 colnames(q_res) <- paste0(colnames(q_res), "_qval")
 
 results <- cbind(beta_res, q_res)
 
+rownames(results) <- taxon_names
+
 outfile <- "results/batch/ancombc_results.tsv"
-write.table(results, file=outfile, sep="\t")
+write.table(results, file=outfile, sep="\t", row.names=TRUE)
