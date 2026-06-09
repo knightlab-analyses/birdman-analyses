@@ -1,6 +1,6 @@
-#!/home/grahman/miniconda3/envs/da-R/bin/Rscript
-#SBATCH --chdir=/home/grahman/projects/birdman-analyses-final
-#SBATCH --output=/home/grahman/projects/birdman-analyses-final/slurm_out/relman_abx/%x.out
+#!/home/lpatel/software/miniconda3/envs/ancombc2/bin/Rscript
+#SBATCH --chdir=/ddn_scratch/lpatel/projects/2024-07-17_q2-birdman/birdman-analyses-b2
+#SBATCH --output=/ddn_scratch/lpatel/projects/2024-07-17_q2-birdman/birdman-analyses-b2/slurm_out/relman_abx/%x.out
 #SBATCH --partition=short
 #SBATCH --mem=8G
 #SBATCH --nodes=1
@@ -31,13 +31,23 @@ physeq <- phyloseq::phyloseq(taxa, meta)
 
 design_formula <- "antibiotic + host_subject_id"
 
-ancombc.results <- ANCOMBC::ancombc(phyloseq=physeq, formula=design_formula,
-                                    zero_cut=1.0)
-results_beta <- as.data.frame(ancombc.results$res$beta)
-results_qval <- as.data.frame(ancombc.results$res$q_val)
+ancombc.results <- ANCOMBC::ancombc2(data = physeq,
+                                     fix_formula = design_formula,
+                                     prv_cut = 0.0)
+taxon_names <- ancombc.results$res$taxon
+lfc_cols <- grep("^lfc_", names(ancombc.results$res), value = TRUE)
+beta_res <- as.data.frame(ancombc.results$res[, lfc_cols])
+colnames(beta_res) <- paste0(colnames(beta_res), "_beta")
+
+q_cols <- grep("^q_", names(ancombc.results$res), value = TRUE)
+q_res <- as.data.frame(ancombc.results$res[, q_cols])
+colnames(q_res) <- paste0(colnames(q_res), "_qval")
+
+rownames(beta_res) <- taxon_names
+rownames(q_res) <- taxon_names
 
 outfile_beta <- "results/relman_abx/ancombc_results_beta.tsv"
-write.table(results_beta, file=outfile_beta, sep="\t")
+write.table(beta_res, file=outfile_beta, sep="\t")
 
 outfile_qval <- "results/relman_abx/ancombc_results_qval.tsv"
-write.table(results_qval, file=outfile_qval, sep="\t")
+write.table(q_res, file=outfile_qval, sep="\t")

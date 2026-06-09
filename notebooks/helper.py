@@ -5,7 +5,7 @@ tool_text_styling_dict = {
     "birdman": "BIRDMAn",
     "deseq2": "DESeq2",
     "aldex2": "ALDEx2",
-    "ancombc": "ANCOM-BC",
+    "ancombc": "ANCOM-BC2",
     "songbird": "Songbird"
 }
 
