@@ -1,29 +1,29 @@
 """
 Figure 2 — BIRDMAn use cases, rendered in full.
 
-    a  Vaginal microbiome (Ravel et al. 2011): BIRDMAn posterior differentials
-       for the N most BV-associated and N most health-associated features.
-       Bar colour ramps with |differential| within each direction. Only features
-       whose 95% HDI excludes zero are eligible; ranking on the posterior mean
-       alone promotes features whose means are large only because they are
-       barely estimated.
+    a  Vaginal microbiome (Ravel et al. 2011): posterior differentials with 95%
+       HDI error bars, for the 10 most BV-associated and 10 most
+       health-associated features. Only features whose HDI excludes zero are
+       eligible — ranking on the posterior mean alone promotes features whose
+       means are large only because they are barely estimated.
 
     b  Dual-course ciprofloxacin (Dethlefsen & Relman 2011): per-subject sample
-       log-ratio trajectories for the FirstCp and SecondCp contrasts (top row),
-       and the corresponding posterior derivative with a 5-95% ribbon (bottom).
+       log-ratio trajectories (top row) and the posterior derivative with a
+       5-95% ribbon (bottom row), for the FirstCp and SecondCp contrasts.
 
-Both panels run from data committed to this repository. Panel b is drawn by
+Both panels run from committed data. Panel b is drawn by
 scripts/relman_abx/3.01-plot_figure2b.py so it keeps the styling of the original
-published figure; if its inputs under results/relman_abx/ are ever absent, a
-labelled placeholder is drawn so the composite still renders.
+published figure; a labelled placeholder is drawn if its inputs are absent.
 
-HDI unpacking follows https://github.com/ahdilmore/MARS_Birdman
-(birdman/zebra_birdman_analysis.ipynb): split on the comma, strip the
-parentheses, flag credible when the interval excludes zero, then convert the
-bounds to offsets from the mean for errorbar().
+The figure is authored at final print width (180 mm), so the sizes in the file
+are the sizes on the page.
+
+HDI unpacking follows https://github.com/ahdilmore/MARS_Birdman: split on the
+comma, strip the parentheses, flag credible when the interval excludes zero,
+then convert the bounds to offsets from the mean for errorbar().
 
 Usage:
-    python scripts/figure2.py [-n 10] [--include-non-credible] [--no-ci] [--seed 0]
+    python scripts/figure2.py [--seed 0]
 """
 
 import argparse
@@ -103,64 +103,45 @@ COVARIATE = "C(study_condition, Treatment('healthy'))[T.bacterial_vaginosis]"
 LEVELS = ["preCp", "FirstCp", "FirstWPC", "Interim", "SecondCp", "SecondWPC", "PostCp"]
 LEVEL_DIFFS = [f"{LEVELS[i]}_vs_{LEVELS[i - 1]}" for i in range(1, len(LEVELS))]
 CONTRASTS = ["FirstCp_vs_preCp", "SecondCp_vs_Interim"]
-N_LOGRATIO = 40
+N_PER_SIDE = 10      # features shown per direction in panel a
+N_LOGRATIO = 40      # features in each half of the panel b log-ratio
 
-# Panel a: two sequential ramps about a pale midpoint (a diverging scheme keyed
-# to magnitude). Panel b subjects: categorical, validated colourblind-safe --
-# chroma >= 0.1, adjacent CVD dE 10.5 (protan), normal-vision dE 26.9.
+# Panel a: two sequential ramps about a pale midpoint. Panel b subjects:
+# categorical, validated colourblind-safe (protan dE 9.2, normal dE 22.9).
 BV_CMAP, HEALTH_CMAP = plt.get_cmap("Reds"), plt.get_cmap("Blues")
-RAMP_LO, RAMP_HI = 0.22, 0.92
-BV_KEY, HEALTH_KEY = BV_CMAP(0.75), HEALTH_CMAP(0.55)
+RAMP = (0.22, 0.92)
 
 
 # ---------------------------------------------------------------------------
 # Panel a — vaginal differentials
 # ---------------------------------------------------------------------------
-def unpack_hdi(df, covariate):
-    """'(lo, hi)' -> errorbar offsets from the mean, plus a credible flag."""
-    hdi_col, mean_col = f"{covariate}_hdi", f"{covariate}_mean"
-    bounds = df[hdi_col].astype(str).str.split(",", expand=True)
-    df["lower"] = bounds[0].str.strip().str[1:].astype(float)
-    df["upper"] = bounds[1].str.strip().str[:-1].astype(float)
-    df["credible"] = np.where((df["lower"] > 0) | (df["upper"] < 0), "yes", "no")
-    df["upper"] = df["upper"] - df[mean_col]
-    df["lower"] = df[mean_col] - df["lower"]
-    return df
-
-
-def ramp_colors(means):
-    """Shade each bar by |differential|, scaled within its own direction."""
-    out = []
-    pos, neg = means[means > 0], means[means < 0]
-    pmax = pos.max() if len(pos) else 1.0
-    nmax = abs(neg.min()) if len(neg) else 1.0
-    for m in means:
-        frac = abs(m) / (pmax if m > 0 else nmax)
-        shade = RAMP_LO + (RAMP_HI - RAMP_LO) * frac
-        out.append(BV_CMAP(shade) if m > 0 else HEALTH_CMAP(shade))
-    return out
-
-
-def panel_a(ax, n, credible_only, show_ci):
+def panel_a(ax):
+    mean_col, hdi_col = f"{COVARIATE}_mean", f"{COVARIATE}_hdi"
     df = (pd.read_csv(DIFFERENTIALS, sep="\t")
             .rename(columns={"feature id": "Feature"})
             .set_index("Feature"))
-    df = unpack_hdi(df, COVARIATE)
-    mean_col = f"{COVARIATE}_mean"
-    if credible_only:
-        df = df[df["credible"] == "yes"]
+
+    lo, hi = (df[hdi_col].astype(str).str.strip("()")
+              .str.split(",", expand=True).astype(float).to_numpy().T)
+    df["lower"] = df[mean_col] - lo          # errorbar wants offsets, not bounds
+    df["upper"] = hi - df[mean_col]
+    df = df[(lo > 0) | (hi < 0)]             # credible: HDI excludes zero
 
     df = df.sort_values(mean_col)
-    sel = df if len(df) <= 2 * n else pd.concat([df.head(n), df.tail(n)])
-
-    ys = np.arange(len(sel))          # ascending value, so most positive on top
+    sel = pd.concat([df.head(N_PER_SIDE), df.tail(N_PER_SIDE)])
     means = sel[mean_col].to_numpy()
+    ys = np.arange(len(sel))                 # ascending, so most positive on top
 
-    ax.barh(ys, means, color=ramp_colors(means), height=0.74, zorder=2)
-    if show_ci:
-        ax.errorbar(means, ys, xerr=sel[["lower", "upper"]].to_numpy().T,
-                    fmt="none", ecolor=MUTED, elinewidth=ERR_LW, capsize=1.5,
-                    capthick=ERR_LW, alpha=0.9, zorder=3)
+    # Shade each bar by |differential|, scaled within its own direction.
+    scale = {1: means.max(), -1: abs(means.min())}
+    colors = [(BV_CMAP if m > 0 else HEALTH_CMAP)(
+                  RAMP[0] + (RAMP[1] - RAMP[0]) * abs(m) / scale[np.sign(m)])
+              for m in means]
+
+    ax.barh(ys, means, color=colors, height=0.74, zorder=2)
+    ax.errorbar(means, ys, xerr=sel[["lower", "upper"]].to_numpy().T, fmt="none",
+                ecolor=MUTED, elinewidth=ERR_LW, capsize=1.5, capthick=ERR_LW,
+                alpha=0.9, zorder=3)
     ax.axvline(0, color=RULE, linewidth=SPINE_LW, zorder=4)
 
     ax.set_yticks(ys)
@@ -169,17 +150,16 @@ def panel_a(ax, n, credible_only, show_ci):
     # the differential is the posterior coefficient; matches panel b's beta bar
     ax.set_xlabel(r"BIRDMAn $\beta$", fontsize=BASE_PT + 1.5, color=INK,
                   labelpad=4)
-    ax.tick_params(axis="both", labelsize=BASE_PT, length=TICK_LEN,
-                   width=TICK_LW, color=RULE, labelcolor=INK)
-    for side in ("top", "right"):
-        ax.spines[side].set_visible(False)
-    for side in ("left", "bottom"):
-        ax.spines[side].set_color(RULE)
-        ax.spines[side].set_linewidth(SPINE_LW)
+    ax.tick_params(labelsize=BASE_PT, length=TICK_LEN, width=TICK_LW,
+                   color=RULE, labelcolor=INK)
+    for side, spine in ax.spines.items():
+        spine.set_visible(side in ("left", "bottom"))
+        spine.set_color(RULE)
+        spine.set_linewidth(SPINE_LW)
 
-    # Legend below the panel, horizontal — as in the reference layout.
-    ax.legend(handles=[Patch(facecolor=BV_KEY, label="BV-associated"),
-                       Patch(facecolor=HEALTH_KEY, label="Healthy-associated")],
+    ax.legend(handles=[Patch(facecolor=BV_CMAP(0.75), label="BV-associated"),
+                       Patch(facecolor=HEALTH_CMAP(0.55),
+                             label="Healthy-associated")],
               loc="upper center", bbox_to_anchor=(0.5, -0.125), ncol=2,
               fontsize=BASE_PT, frameon=False, handlelength=1.2,
               handleheight=0.9, columnspacing=1.4, borderpad=0.0)
@@ -217,11 +197,6 @@ def panel_b_placeholder(axes):
 # ---------------------------------------------------------------------------
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-n", type=int, default=10, help="features per side in panel a")
-    ap.add_argument("--include-non-credible", action="store_true",
-                    help="do not require the HDI to exclude zero in panel a")
-    ap.add_argument("--no-ci", action="store_true",
-                    help="omit HDI error bars from panel a (reference styling)")
     ap.add_argument("--seed", type=int, default=None,
                     help="seed panel b's bootstrap CI bands for reproducibility")
     args = ap.parse_args()
@@ -232,9 +207,7 @@ def main():
     gs = GridSpec(2, 3, figure=fig, width_ratios=[1.22, 1.0, 1.0],
                   hspace=0.14, wspace=0.62, left=0.170, right=0.988,
                   top=0.90, bottom=0.17)
-    ax_a = fig.add_subplot(gs[:, 0])
-    panel_a(ax_a, args.n, credible_only=not args.include_non_credible,
-            show_ci=not args.no_ci)
+    panel_a(fig.add_subplot(gs[:, 0]))
 
     if relman_available():
         with plt.rc_context(PANEL_B_STYLE):
