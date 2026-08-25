@@ -23,7 +23,7 @@ parentheses, flag credible when the interval excludes zero, then convert the
 bounds to offsets from the mean for errorbar().
 
 Usage:
-    python scripts/F2_figure2.py [-n 10] [--include-non-credible] [--no-ci]
+    python scripts/figure2.py [-n 10] [--include-non-credible] [--no-ci] [--seed 0]
 """
 
 import argparse
