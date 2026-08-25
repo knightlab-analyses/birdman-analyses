@@ -13,7 +13,8 @@ import pandas as pd
 from src.logger import setup_loggers
 from src.relman_abx.model_single import ABXModelSingle
 
-PROJ_DIR = "/home/grahman/projects/birdman-analyses-final"
+from src.relman_abx.model_single import PROJ_DIR
+
 TABLE_FILE = f"{PROJ_DIR}/data/relman_abx/processed/processed_tbl.biom"
 TABLE = biom.load_table(TABLE_FILE)
 FIDS = TABLE.ids(axis="observation")
@@ -30,6 +31,8 @@ FIDS = TABLE.ids(axis="observation")
 @click.option("--disp-scale", default=3.0)
 @click.option("--re-prior", default=3.0)
 @click.option("--logfile", required=True)
+# was a hardcoded 10s pause for the panfs mount; unnecessary locally
+@click.option("--sleep", default=0, type=int)
 def run_birdman(
     inference_dir,
     num_chunks,
@@ -41,6 +44,7 @@ def run_birdman(
     disp_scale,
     re_prior,
     logfile,
+    sleep,
 ):
     birdman_logger = setup_loggers(logfile)
 
@@ -92,7 +96,8 @@ def run_birdman(
 
             inf.to_netcdf(outfile)
             birdman_logger.info(f"Saved to {outfile}")
-            time.sleep(10)
+            if sleep:
+                time.sleep(sleep)
 
 if __name__ == "__main__":
     run_birdman()

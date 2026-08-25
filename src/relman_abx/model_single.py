@@ -1,12 +1,17 @@
-from pkg_resources import resource_filename
+import os
 
 import biom
 from birdman import SingleFeatureModel
 import numpy as np
 import pandas as pd
 
-PROJ_DIR = "/home/grahman/projects/birdman-analyses-final"
-MODEL_PATH = resource_filename("src", "relman_abx/stan/abx_model_single.stan")
+HERE = os.path.dirname(os.path.abspath(__file__))
+# repo root, so this runs from a fresh clone; override w/ BIRDMAN_ANALYSES_DIR
+PROJ_DIR = os.environ.get(
+    "BIRDMAN_ANALYSES_DIR",
+    os.path.dirname(os.path.dirname(HERE))
+)
+MODEL_PATH = os.path.join(HERE, "stan", "abx_model_single.stan")
 MD = pd.read_table(f"{PROJ_DIR}/data/relman_abx/processed/processed_md.tsv",
                    sep="\t", index_col=0)
 
