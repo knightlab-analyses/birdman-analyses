@@ -8,12 +8,16 @@ Figure 2 — BIRDMAn use cases, rendered in full.
        means are large only because they are barely estimated.
 
     b  Dual-course ciprofloxacin (Dethlefsen & Relman 2011): per-subject sample
-       log-ratio trajectories (top row) and the posterior derivative with a
-       5-95% ribbon (bottom row), for the FirstCp and SecondCp contrasts.
+       log-ratio trajectories with 95% bootstrap CI bands (top row), and the
+       posterior derivative with a 5-95% ribbon (bottom row), for the FirstCp
+       and SecondCp contrasts.
 
-Both panels run from committed data. Panel b is drawn by
-scripts/relman_abx/3.01-plot_figure2b.py so it keeps the styling of the original
-published figure; a labelled placeholder is drawn if its inputs are absent.
+Both panels run from committed artifacts, so this works from a fresh clone with
+no cluster and no model refit:
+    data/qadabra/outputs/birdman-differentials.tsv
+    results/relman_abx/birdman_results.beta_var.tsv
+    results/relman_abx/{contrast}_derivative_quantiles.tsv
+    data/relman_abx/processed/{processed_tbl.biom,processed_md.tsv}
 
 The figure is authored at final print width (180 mm), so the sizes in the file
 are the sizes on the page.
@@ -23,76 +27,19 @@ comma, strip the parentheses, flag credible when the interval excludes zero,
 then convert the bounds to offsets from the mean for errorbar().
 
 Usage:
-    python scripts/figure2.py [--seed 0]
+    python scripts/figure2.py
 """
 
-import argparse
-from importlib.machinery import SourceFileLoader
 from pathlib import Path
 
+import biom
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.gridspec import GridSpec
-from matplotlib.patches import FancyBboxPatch, Patch
+from matplotlib.patches import Patch
 
 REPO = Path(__file__).resolve().parents[1]
-
-# panel b is drawn by the relman_abx script so the composite keeps the styling
-# of the original published figure rather than restyling it here
-_FIG2B = SourceFileLoader(
-    "fig2b", str(REPO / "scripts" / "relman_abx" / "3.01-plot_figure2b.py")
-).load_module()
-
-# authored at final print width so production does not scale the type down
-FIG_W_MM, FIG_H_MM = 180.0, 114.0          # OUP double column
-MM = 1 / 25.4
-BASE_PT = 6.5                              # "large" -> 7.8, "x-large" -> 9.4
-
-INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
-
-# one set of chrome weights for both panels, so a and b read as one figure.
-# OUP's floor is 0.25 pt, so nothing here may go below it.
-SPINE_LW = 0.7
-TICK_LW = 0.6
-TICK_LEN = 2.5
-GRID_LW = 0.4
-ERR_LW = 0.7
-
-# notebooks/paper.mplstyle, minus the savefig/dpi keys -- those are global and
-# would override this figure's explicit GridSpec margins. grid.linewidth is
-# raised from grahman's 0.1, which is below the printable minimum. he sized
-# panel b with relative keywords, so font.size rescales it as a whole.
-PANEL_B_STYLE = {
-    "figure.facecolor": "white",
-    "axes.spines.top": False,
-    "axes.spines.right": False,
-    "font.size": BASE_PT,
-    "axes.labelsize": "large",
-    "axes.titlesize": "x-large",
-    "axes.titlelocation": "left",
-    "axes.axisbelow": True,
-    "grid.linewidth": GRID_LW,
-    "grid.color": GRID,
-    # absolute, not grahman's "x-small": relative to a 6.5pt base that would
-    # render the subject legend at 4.5pt
-    "legend.fontsize": BASE_PT - 0.5,
-    "legend.title_fontsize": BASE_PT,
-    "lines.linewidth": 1.0,
-    "xtick.labelsize": BASE_PT,
-    "ytick.labelsize": BASE_PT,
-    # shared chrome -- must match panel_a below
-    "axes.edgecolor": RULE,
-    "axes.linewidth": SPINE_LW,
-    "xtick.color": RULE,
-    "ytick.color": RULE,
-    "xtick.labelcolor": INK,
-    "ytick.labelcolor": INK,
-    "xtick.major.width": TICK_LW,
-    "ytick.major.width": TICK_LW,
-    "xtick.major.size": TICK_LEN,
-    "ytick.major.size": TICK_LEN,
-}
 DIFFERENTIALS = REPO / "data" / "qadabra" / "outputs" / "birdman-differentials.tsv"
 RELMAN = REPO / "results" / "relman_abx"
 RELMAN_TBL = REPO / "data" / "relman_abx" / "processed" / "processed_tbl.biom"
@@ -103,13 +50,44 @@ COVARIATE = "C(study_condition, Treatment('healthy'))[T.bacterial_vaginosis]"
 LEVELS = ["preCp", "FirstCp", "FirstWPC", "Interim", "SecondCp", "SecondWPC", "PostCp"]
 LEVEL_DIFFS = [f"{LEVELS[i]}_vs_{LEVELS[i - 1]}" for i in range(1, len(LEVELS))]
 CONTRASTS = ["FirstCp_vs_preCp", "SecondCp_vs_Interim"]
+SUBJECTS = ["494.D", "494.E", "494.F"]
 N_PER_SIDE = 10      # features shown per direction in panel a
 N_LOGRATIO = 40      # features in each half of the panel b log-ratio
+N_BOOT, SEED = 1000, 0    # bootstrap CI for the panel b bands; seeded, so the
+                          # bands are identical run to run
+
+# authored at final print width so production does not scale the type down
+FIG_W_MM, FIG_H_MM = 180.0, 114.0          # OUP double column
+MM = 1 / 25.4
+BASE_PT = 6.5
 
 # Panel a: two sequential ramps about a pale midpoint. Panel b subjects:
 # categorical, validated colourblind-safe (protan dE 9.2, normal dE 22.9).
 BV_CMAP, HEALTH_CMAP = plt.get_cmap("Reds"), plt.get_cmap("Blues")
 RAMP = (0.22, 0.92)
+SUBJ_COLORS = ["#0173b2", "#de8f05", "#029e73"]
+INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
+
+# one set of chrome weights for both panels, so a and b read as one figure.
+# OUP's floor is 0.25 pt, so nothing here may go below it.
+SPINE_LW, TICK_LW, TICK_LEN, GRID_LW, ERR_LW = 0.7, 0.6, 2.5, 0.4, 0.7
+
+TOP_LABEL = (r"$\ln\left(\frac{\sum\ \mathrm{Top\ 40\ OTUs}}"
+             r"{\sum \mathrm{Bottom\ 40\ OTUs}}\right)$")
+BOT_LABEL = (r"$\Delta\ \ln\left(\frac{\bar{\beta}_{\mathrm{Top\ 40\ OTUs}}}"
+             r"{\bar{\beta}_{\mathrm{Bottom\ 40\ OTUs}}}\right)$")
+
+
+def style_axis(ax, grid=False):
+    """Shared chrome, so both panels read as one figure."""
+    if grid:
+        ax.grid(True, color=GRID, linewidth=GRID_LW)
+        ax.set_axisbelow(True)
+    ax.tick_params(labelsize=BASE_PT, length=TICK_LEN, width=TICK_LW,
+                   color=RULE, labelcolor=INK)
+    for spine in ax.spines.values():
+        spine.set_color(RULE)
+        spine.set_linewidth(SPINE_LW)
 
 
 # ---------------------------------------------------------------------------
@@ -148,14 +126,10 @@ def panel_a(ax):
     ax.set_yticklabels([f.replace("_", " ") for f in sel.index], fontsize=BASE_PT)
     ax.set_ylim(-0.7, len(sel) - 0.3)
     # the differential is the posterior coefficient; matches panel b's beta bar
-    ax.set_xlabel(r"BIRDMAn $\beta$", fontsize=BASE_PT + 1.5, color=INK,
-                  labelpad=4)
-    ax.tick_params(labelsize=BASE_PT, length=TICK_LEN, width=TICK_LW,
-                   color=RULE, labelcolor=INK)
+    ax.set_xlabel(r"BIRDMAn $\beta$", fontsize=BASE_PT + 1.5, color=INK, labelpad=4)
+    style_axis(ax)
     for side, spine in ax.spines.items():
         spine.set_visible(side in ("left", "bottom"))
-        spine.set_color(RULE)
-        spine.set_linewidth(SPINE_LW)
 
     ax.legend(handles=[Patch(facecolor=BV_CMAP(0.75), label="BV-associated"),
                        Patch(facecolor=HEALTH_CMAP(0.55),
@@ -168,56 +142,108 @@ def panel_a(ax):
 # ---------------------------------------------------------------------------
 # Panel b — antibiotic log-ratio dynamics
 # ---------------------------------------------------------------------------
-def relman_available():
-    """panel b needs the committed model outputs; report whether they are here."""
-    beta = RELMAN / "birdman_results.beta_var.tsv"
-    quants = [RELMAN / f"{c}_derivative_quantiles.tsv" for c in CONTRASTS]
-    return (beta.exists() and RELMAN_TBL.exists() and RELMAN_MD.exists()
-            and all(q.exists() for q in quants))
+def load_relman():
+    summ = pd.read_table(RELMAN / "birdman_results.beta_var.tsv", index_col=0)
+    summ.index = summ.index.astype(str)
+    # patsy names backward-difference columns after the first level of each
+    # pair, so the rename is positional -- column order is load-bearing
+    summ.columns = (["Intercept_mean"] + [f"{d}_mean" for d in LEVEL_DIFFS]
+                    + ["Intercept_std"] + [f"{d}_std" for d in LEVEL_DIFFS])
+    cent = (summ[[f"{d}_mean" for d in LEVEL_DIFFS]]
+            .apply(lambda x: x - x.mean(), axis=0))
+
+    table = biom.load_table(str(RELMAN_TBL)).to_dataframe(dense=True).T
+    md = pd.read_table(RELMAN_MD, index_col=0)
+    md["antibiotic"] = pd.Categorical(md["antibiotic"], categories=LEVELS,
+                                      ordered=True)
+
+    log_ratios = {}
+    for contrast in CONTRASTS:
+        ranked = cent[f"{contrast}_mean"].sort_values(ascending=False)
+        num = table[ranked.head(N_LOGRATIO).index].sum(axis=1) + 1
+        den = table[ranked.tail(N_LOGRATIO).index].sum(axis=1) + 1
+        log_ratios[contrast] = np.log(num / den)
+
+    derivs = {}
+    for contrast in CONTRASTS:
+        d = pd.read_table(RELMAN / f"{contrast}_derivative_quantiles.tsv")
+        d["covariate"] = pd.Categorical(d["covariate"], categories=LEVEL_DIFFS,
+                                        ordered=True)
+        derivs[contrast] = d.sort_values("covariate")
+
+    return pd.DataFrame(log_ratios).join(md), derivs
 
 
-def panel_b_placeholder(axes):
-    for ax in axes:
-        ax.set_axis_off()
-    ax = axes[0]
-    ax.add_patch(FancyBboxPatch(
-        (0.02, -1.18), 2.14, 2.16, boxstyle="round,pad=0,rounding_size=0.02",
-        transform=ax.transAxes, facecolor="#F5F6F8", edgecolor=RULE,
-        linewidth=0.7, linestyle=(0, (3, 2)), clip_on=False, zorder=1))
-    ax.text(1.09, 0.20, "Antibiotic log-ratio dynamics", transform=ax.transAxes,
-            ha="center", va="center", fontsize=10, fontweight="bold", color=INK)
-    ax.text(1.09, -0.08,
-            "awaiting BIRDMAn model outputs\n\n"
-            "results/relman_abx/birdman_results.beta_var.tsv\n"
-            "results/relman_abx/beta_var.nc  (or *_derivative_quantiles.tsv)",
-            transform=ax.transAxes, ha="center", va="center", fontsize=7.5,
-            color=MUTED, linespacing=1.7)
+def boot_ci(values, rng):
+    """95% bootstrap CI of the mean — the band seaborn draws, but seeded."""
+    if len(values) < 2:
+        return np.nan, np.nan
+    draws = rng.choice(values, size=(N_BOOT, len(values)), replace=True)
+    return np.percentile(draws.mean(axis=1), [2.5, 97.5])
+
+
+def panel_b(fig, gs):
+    lr_df, derivs = load_relman()
+    rng = np.random.default_rng(SEED)
+    colors = dict(zip(SUBJECTS, SUBJ_COLORS))
+    x_of = {lvl: i for i, lvl in enumerate(LEVELS)}
+
+    lr1 = fig.add_subplot(gs[0, 0])
+    lr2 = fig.add_subplot(gs[0, 1], sharey=lr1)
+    for ax, contrast in zip((lr1, lr2), CONTRASTS):
+        for subj, g in lr_df.groupby("host_subject_id", observed=True):
+            pts = g.groupby("antibiotic", observed=True)[contrast]
+            xs = [x_of[lvl] for lvl, _ in pts]
+            mean = [v.mean() for _, v in pts]
+            ci = np.array([boot_ci(v.to_numpy(), rng) for _, v in pts])
+            ax.fill_between(xs, ci[:, 0], ci[:, 1], color=colors[subj],
+                            alpha=0.20, linewidth=0, zorder=2)
+            ax.plot(xs, mean, marker="o", ms=3, lw=1.0, color=colors[subj],
+                    markeredgecolor="white", markeredgewidth=0.4, zorder=3)
+        ax.set_title(contrast.replace("_vs_", " vs. "), fontsize=BASE_PT + 1.5)
+        ax.set_xticks(range(len(LEVELS)))
+        ax.set_xticklabels([])
+        ax.set_xlim(-0.25, 6.25)
+        style_axis(ax, grid=True)
+    lr1.set_ylabel(TOP_LABEL, fontsize=BASE_PT + 2.5)
+    lr2.tick_params("y", width=0, labelleft=False)
+    lr1.legend(handles=[Patch(facecolor=colors[s], label=s, linewidth=0.4,
+                              edgecolor=INK) for s in SUBJECTS],
+               title="Subject", title_fontsize=BASE_PT, fontsize=BASE_PT - 0.5,
+               loc="upper right", frameon=True, edgecolor=RULE,
+               labelspacing=0.3, handlelength=1.2)
+
+    d1 = fig.add_subplot(gs[1, 0])
+    d2 = fig.add_subplot(gs[1, 1], sharey=d1)
+    for ax, contrast in zip((d1, d2), CONTRASTS):
+        d = derivs[contrast]
+        lo, mid, hi = (d[d["quantile"] == q]["beta_var"].to_numpy()
+                       for q in (0.05, 0.5, 0.95))
+        xs = np.arange(len(mid))
+        ax.fill_between(xs, lo, hi, color="gray", alpha=0.25, linewidth=0, zorder=2)
+        for bound in (lo, hi):
+            ax.plot(xs, bound, color="gray", ls="--", lw=0.8, zorder=3)
+        ax.plot(xs, mid, marker="o", ms=3, lw=1.0, color="gray",
+                markeredgecolor=INK, markeredgewidth=0.4, zorder=4)
+        # six derivatives sit between the seven timepoints they contrast
+        ax.set_xticks(np.arange(-1, 6))
+        ax.set_xticklabels(LEVELS, rotation=45, ha="right", fontsize=BASE_PT)
+        ax.set_xlim(-1.25, 5.25)
+        style_axis(ax, grid=True)
+    d1.set_ylabel(BOT_LABEL, fontsize=BASE_PT + 2.5)
+    d2.tick_params("y", width=0, labelleft=False)
 
 
 # ---------------------------------------------------------------------------
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, default=None,
-                    help="seed panel b's bootstrap CI bands for reproducibility")
-    args = ap.parse_args()
-
     fig = plt.figure(figsize=(FIG_W_MM * MM, FIG_H_MM * MM))
-    # wspace here is the gap between panel a and panel b; panel b's own internal
-    # spacing is set by 3.01. it needs to clear panel b's math ylabel.
+    # wspace is the gap between panel a and panel b; it has to clear panel b's
+    # math ylabel, which is wide. panel b's internal gap is set on the subgrid.
     gs = GridSpec(2, 3, figure=fig, width_ratios=[1.22, 1.0, 1.0],
-                  hspace=0.14, wspace=0.62, left=0.170, right=0.988,
+                  hspace=0.18, wspace=0.62, left=0.170, right=0.988,
                   top=0.90, bottom=0.17)
     panel_a(fig.add_subplot(gs[:, 0]))
-
-    if relman_available():
-        with plt.rc_context(PANEL_B_STYLE):
-            _FIG2B.plot_figure_2b(fig=fig, subplot_spec=gs[:, 1:],
-                                  seed=args.seed)
-    else:
-        print(f"[panel b] missing model outputs under {RELMAN.relative_to(REPO)}"
-              " - drawing placeholder")
-        panel_b_placeholder([fig.add_subplot(gs[0, 1]), fig.add_subplot(gs[0, 2]),
-                             fig.add_subplot(gs[1, 1]), fig.add_subplot(gs[1, 2])])
+    panel_b(fig, gs[:, 1:].subgridspec(2, 2, wspace=0.08, hspace=0.18))
 
     # Panel labels in figure coordinates so long tick labels cannot push them
     # off-canvas.
