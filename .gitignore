@@ -1,17 +1,20 @@
 slurm_out/
-data/
+inferences/
+results/*/log/
 *.swp
 *.swo
 *.ipynb_checkpoints/
 *.nc
 *.pyc
+__pycache__/
 *.hpp
+*.o
+tags
+*.egg-info/
+
+# compiled stan binaries, not the .stan sources
 src/*/stan/*model
 src/*/stan/*model_single
 src/*/stan/*_single
-tags
-*.egg-info/
-src/*/stan/*_single
 src/*/stan/*simulation
 src/*/stan/*regression
-*.o
