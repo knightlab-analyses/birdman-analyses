@@ -48,7 +48,16 @@ _FIG2B = SourceFileLoader(
 FIG_W_MM, FIG_H_MM = 180.0, 114.0          # OUP double column
 MM = 1 / 25.4
 BASE_PT = 6.5                              # "large" -> 7.8, "x-large" -> 9.4
-MIN_LW = 0.3                               # OUP floor is 0.25 pt
+
+INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
+
+# one set of chrome weights for both panels, so a and b read as one figure.
+# OUP's floor is 0.25 pt, so nothing here may go below it.
+SPINE_LW = 0.7
+TICK_LW = 0.6
+TICK_LEN = 2.5
+GRID_LW = 0.4
+ERR_LW = 0.7
 
 # notebooks/paper.mplstyle, minus the savefig/dpi keys -- those are global and
 # would override this figure's explicit GridSpec margins. grid.linewidth is
@@ -63,7 +72,8 @@ PANEL_B_STYLE = {
     "axes.titlesize": "x-large",
     "axes.titlelocation": "left",
     "axes.axisbelow": True,
-    "grid.linewidth": MIN_LW,
+    "grid.linewidth": GRID_LW,
+    "grid.color": GRID,
     # absolute, not grahman's "x-small": relative to a 6.5pt base that would
     # render the subject legend at 4.5pt
     "legend.fontsize": BASE_PT - 0.5,
@@ -71,6 +81,17 @@ PANEL_B_STYLE = {
     "lines.linewidth": 1.0,
     "xtick.labelsize": BASE_PT,
     "ytick.labelsize": BASE_PT,
+    # shared chrome -- must match panel_a below
+    "axes.edgecolor": RULE,
+    "axes.linewidth": SPINE_LW,
+    "xtick.color": RULE,
+    "ytick.color": RULE,
+    "xtick.labelcolor": INK,
+    "ytick.labelcolor": INK,
+    "xtick.major.width": TICK_LW,
+    "ytick.major.width": TICK_LW,
+    "xtick.major.size": TICK_LEN,
+    "ytick.major.size": TICK_LEN,
 }
 DIFFERENTIALS = REPO / "data" / "qadabra" / "outputs" / "birdman-differentials.tsv"
 RELMAN = REPO / "results" / "relman_abx"
@@ -90,8 +111,6 @@ N_LOGRATIO = 40
 BV_CMAP, HEALTH_CMAP = plt.get_cmap("Reds"), plt.get_cmap("Blues")
 RAMP_LO, RAMP_HI = 0.22, 0.92
 BV_KEY, HEALTH_KEY = BV_CMAP(0.75), HEALTH_CMAP(0.55)
-SUBJ_COLORS = ["#0077BB", "#EE7733", "#009988"]
-INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
 
 
 # ---------------------------------------------------------------------------
@@ -140,26 +159,28 @@ def panel_a(ax, n, credible_only, show_ci):
     ax.barh(ys, means, color=ramp_colors(means), height=0.74, zorder=2)
     if show_ci:
         ax.errorbar(means, ys, xerr=sel[["lower", "upper"]].to_numpy().T,
-                    fmt="none", ecolor=INK, elinewidth=0.6, capsize=1.5,
-                    capthick=0.6, alpha=0.8, zorder=3)
-    ax.axvline(0, color=INK, linewidth=0.8, zorder=4)
+                    fmt="none", ecolor=MUTED, elinewidth=ERR_LW, capsize=1.5,
+                    capthick=ERR_LW, alpha=0.9, zorder=3)
+    ax.axvline(0, color=RULE, linewidth=SPINE_LW, zorder=4)
 
     ax.set_yticks(ys)
     ax.set_yticklabels([f.replace("_", " ") for f in sel.index], fontsize=BASE_PT)
     ax.set_ylim(-0.7, len(sel) - 0.3)
-    ax.set_xlabel("BIRDMAn Differential", fontsize=BASE_PT + 1.5, color=INK,
+    # the differential is the posterior coefficient; matches panel b's beta bar
+    ax.set_xlabel(r"BIRDMAn $\beta$", fontsize=BASE_PT + 1.5, color=INK,
                   labelpad=4)
-    ax.tick_params(axis="both", labelsize=BASE_PT, length=2.5, width=0.5,
-                   color=RULE)
+    ax.tick_params(axis="both", labelsize=BASE_PT, length=TICK_LEN,
+                   width=TICK_LW, color=RULE, labelcolor=INK)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
         ax.spines[side].set_color(RULE)
+        ax.spines[side].set_linewidth(SPINE_LW)
 
     # Legend below the panel, horizontal — as in the reference layout.
     ax.legend(handles=[Patch(facecolor=BV_KEY, label="BV-associated"),
                        Patch(facecolor=HEALTH_KEY, label="Healthy-associated")],
-              loc="upper center", bbox_to_anchor=(0.5, -0.085), ncol=2,
+              loc="upper center", bbox_to_anchor=(0.5, -0.125), ncol=2,
               fontsize=BASE_PT, frameon=False, handlelength=1.2,
               handleheight=0.9, columnspacing=1.4, borderpad=0.0)
 
@@ -208,8 +229,8 @@ def main():
     fig = plt.figure(figsize=(FIG_W_MM * MM, FIG_H_MM * MM))
     # wspace here is the gap between panel a and panel b; panel b's own internal
     # spacing is set by 3.01. it needs to clear panel b's math ylabel.
-    gs = GridSpec(2, 3, figure=fig, width_ratios=[1.30, 1.0, 1.0],
-                  hspace=0.14, wspace=0.40, left=0.175, right=0.988,
+    gs = GridSpec(2, 3, figure=fig, width_ratios=[1.22, 1.0, 1.0],
+                  hspace=0.14, wspace=0.62, left=0.170, right=0.988,
                   top=0.90, bottom=0.17)
     ax_a = fig.add_subplot(gs[:, 0])
     panel_a(ax_a, args.n, credible_only=not args.include_non_credible,
