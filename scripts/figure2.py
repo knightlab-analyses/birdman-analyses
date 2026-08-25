@@ -44,19 +44,33 @@ _FIG2B = SourceFileLoader(
     "fig2b", str(REPO / "scripts" / "relman_abx" / "3.01-plot_figure2b.py")
 ).load_module()
 
+# authored at final print width so production does not scale the type down
+FIG_W_MM, FIG_H_MM = 180.0, 114.0          # OUP double column
+MM = 1 / 25.4
+BASE_PT = 6.5                              # "large" -> 7.8, "x-large" -> 9.4
+MIN_LW = 0.3                               # OUP floor is 0.25 pt
+
 # notebooks/paper.mplstyle, minus the savefig/dpi keys -- those are global and
-# would override this figure's explicit GridSpec margins
+# would override this figure's explicit GridSpec margins. grid.linewidth is
+# raised from grahman's 0.1, which is below the printable minimum. he sized
+# panel b with relative keywords, so font.size rescales it as a whole.
 PANEL_B_STYLE = {
     "figure.facecolor": "white",
     "axes.spines.top": False,
     "axes.spines.right": False,
+    "font.size": BASE_PT,
     "axes.labelsize": "large",
     "axes.titlesize": "x-large",
     "axes.titlelocation": "left",
     "axes.axisbelow": True,
-    "grid.linewidth": 0.1,
-    "legend.fontsize": "x-small",
-    "legend.title_fontsize": "medium",
+    "grid.linewidth": MIN_LW,
+    # absolute, not grahman's "x-small": relative to a 6.5pt base that would
+    # render the subject legend at 4.5pt
+    "legend.fontsize": BASE_PT - 0.5,
+    "legend.title_fontsize": BASE_PT,
+    "lines.linewidth": 1.0,
+    "xtick.labelsize": BASE_PT,
+    "ytick.labelsize": BASE_PT,
 }
 DIFFERENTIALS = REPO / "data" / "qadabra" / "outputs" / "birdman-differentials.tsv"
 RELMAN = REPO / "results" / "relman_abx"
@@ -131,10 +145,12 @@ def panel_a(ax, n, credible_only, show_ci):
     ax.axvline(0, color=INK, linewidth=0.8, zorder=4)
 
     ax.set_yticks(ys)
-    ax.set_yticklabels([f.replace("_", " ") for f in sel.index], fontsize=8)
+    ax.set_yticklabels([f.replace("_", " ") for f in sel.index], fontsize=BASE_PT)
     ax.set_ylim(-0.7, len(sel) - 0.3)
-    ax.set_xlabel("BIRDMAn Differential", fontsize=9.5, color=INK, labelpad=6)
-    ax.tick_params(axis="both", labelsize=8, length=3, color=RULE)
+    ax.set_xlabel("BIRDMAn Differential", fontsize=BASE_PT + 1.5, color=INK,
+                  labelpad=4)
+    ax.tick_params(axis="both", labelsize=BASE_PT, length=2.5, width=0.5,
+                   color=RULE)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
     for side in ("left", "bottom"):
@@ -143,9 +159,9 @@ def panel_a(ax, n, credible_only, show_ci):
     # Legend below the panel, horizontal — as in the reference layout.
     ax.legend(handles=[Patch(facecolor=BV_KEY, label="BV-associated"),
                        Patch(facecolor=HEALTH_KEY, label="Healthy-associated")],
-              loc="upper center", bbox_to_anchor=(0.5, -0.10), ncol=2,
-              fontsize=9, frameon=False, handlelength=1.4, handleheight=1.0,
-              columnspacing=2.0, borderpad=0.0)
+              loc="upper center", bbox_to_anchor=(0.5, -0.085), ncol=2,
+              fontsize=BASE_PT, frameon=False, handlelength=1.2,
+              handleheight=0.9, columnspacing=1.4, borderpad=0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -189,12 +205,12 @@ def main():
                     help="seed panel b's bootstrap CI bands for reproducibility")
     args = ap.parse_args()
 
-    fig = plt.figure(figsize=(13.0, 6.0))
+    fig = plt.figure(figsize=(FIG_W_MM * MM, FIG_H_MM * MM))
     # wspace here is the gap between panel a and panel b; panel b's own internal
-    # spacing is set by 3.01. it needs to clear panel b's x-large math ylabel.
+    # spacing is set by 3.01. it needs to clear panel b's math ylabel.
     gs = GridSpec(2, 3, figure=fig, width_ratios=[1.30, 1.0, 1.0],
-                  hspace=0.12, wspace=0.42, left=0.155, right=0.985,
-                  top=0.90, bottom=0.15)
+                  hspace=0.14, wspace=0.40, left=0.175, right=0.988,
+                  top=0.90, bottom=0.17)
     ax_a = fig.add_subplot(gs[:, 0])
     panel_a(ax_a, args.n, credible_only=not args.include_non_credible,
             show_ci=not args.no_ci)
@@ -211,8 +227,8 @@ def main():
 
     # Panel labels in figure coordinates so long tick labels cannot push them
     # off-canvas.
-    for x, label in ((0.012, "a"), (0.455, "b")):
-        fig.text(x, 0.945, label, fontsize=20, fontweight="bold",
+    for x, label in ((0.010, "a"), (0.455, "b")):
+        fig.text(x, 0.935, label, fontsize=BASE_PT + 4, fontweight="bold",
                  va="bottom", ha="left", color=INK)
 
     OUTDIR.mkdir(parents=True, exist_ok=True)

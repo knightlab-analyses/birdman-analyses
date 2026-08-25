@@ -135,7 +135,7 @@ def plot_figure_2b(fig=None, subplot_spec=None, data=None, seed=None):
         ax.set_xlim([-0.25, 6.25])
     lr1.set_ylabel(TOP_LABEL, fontsize="x-large")
     lr2.set_ylabel("")
-    lr2.tick_params("y", width=0, labelsize=0)
+    lr2.tick_params("y", width=0, labelleft=False)
     lr1.set_title("FirstCp vs. preCp")
     lr2.set_title("SecondCp vs. Interim")
     lr1.legend(handles=patches, title="Subject")
@@ -158,7 +158,7 @@ def plot_figure_2b(fig=None, subplot_spec=None, data=None, seed=None):
         ax.set_xticklabels(LEVELS, rotation=45, ha="right", fontsize="large")
         ax.set_xlim([-1.25, 5.25])
     d1.set_ylabel(BOT_LABEL, fontsize="x-large")
-    d2.tick_params("y", width=0, labelsize=0)
+    d2.tick_params("y", width=0, labelleft=False)
 
     return fig, {"lr": (lr1, lr2), "deriv": (d1, d2)}
 
