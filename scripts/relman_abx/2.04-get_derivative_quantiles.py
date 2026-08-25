@@ -60,9 +60,8 @@ def get_derivative(vals, n=40):
     )
 
 
-for col, prefix in [("FirstCp_vs_preCp_mean", "fcp"),
-                    ("SecondCp_vs_Interim_mean", "scp")]:
-    out = get_derivative(summ_diff_cent[col])
-    outfile = f"{RESULTS_DIR}/{prefix}_derivative_quantiles.tsv"
+for contrast in ["FirstCp_vs_preCp", "SecondCp_vs_Interim"]:
+    out = get_derivative(summ_diff_cent[f"{contrast}_mean"])
+    outfile = f"{RESULTS_DIR}/{contrast}_derivative_quantiles.tsv"
     out.to_csv(outfile, sep="\t", index=False)
     print(f"wrote {outfile}")

@@ -89,9 +89,8 @@ def load_data(proj_dir=PROJ_DIR, n=40):
     predictor_df = pd.DataFrame.from_dict(predictors).join(md)
 
     derivs = {}
-    for key, prefix in [("FirstCp_vs_preCp", "fcp"),
-                        ("SecondCp_vs_Interim", "scp")]:
-        d = pd.read_table(f"{res}/{prefix}_derivative_quantiles.tsv")
+    for key in CONTRASTS:
+        d = pd.read_table(f"{res}/{key}_derivative_quantiles.tsv")
         d["covariate"] = pd.Categorical(d["covariate"], categories=LEVELS_DIFFS,
                                         ordered=True)
         derivs[key] = d.sort_values(by="covariate")
@@ -112,7 +111,10 @@ def plot_figure_2b(fig=None, subplot_spec=None, data=None, seed=None):
     if subplot_spec is None:
         gs = GridSpec(ncols=2, nrows=3, figure=fig)
     else:
-        gs = GridSpecFromSubplotSpec(ncols=2, nrows=2, subplot_spec=subplot_spec)
+        # the two columns share a y-axis and hide the right labels, so keep them
+        # tight -- the caller controls the gap to whatever sits left of them
+        gs = GridSpecFromSubplotSpec(ncols=2, nrows=2, subplot_spec=subplot_spec,
+                                     wspace=0.08, hspace=0.18)
 
     palette = dict(zip(SUBJECTS, sns.color_palette("colorblind", 3)))
     patches = [Patch(facecolor=c, label=s, linewidth=0.5, edgecolor="black")
