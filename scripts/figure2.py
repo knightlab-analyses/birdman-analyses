@@ -74,8 +74,12 @@ SPINE_LW, TICK_LW, TICK_LEN, GRID_LW, ERR_LW = 0.7, 0.6, 2.5, 0.4, 0.7
 
 TOP_LABEL = (r"$\ln\left(\frac{\sum\ \mathrm{Top\ 40\ OTUs}}"
              r"{\sum \mathrm{Bottom\ 40\ OTUs}}\right)$")
-BOT_LABEL = (r"$\Delta\ \ln\left(\frac{\bar{\beta}_{\mathrm{Top\ 40\ OTUs}}}"
-             r"{\bar{\beta}_{\mathrm{Bottom\ 40\ OTUs}}}\right)$")
+# 2.04 computes mean(beta | top 40) - mean(beta | bottom 40): a difference, with
+# no log and no division. beta is already a log-link coefficient, so this is a
+# log-ratio of modelled abundances -- writing ln(beta/beta), as the published
+# figure does, logs the coefficients a second time.
+BOT_LABEL = (r"$\bar{\beta}_{\mathrm{Top\ 40\ OTUs}}"
+             r" - \bar{\beta}_{\mathrm{Bottom\ 40\ OTUs}}$")
 
 
 def style_axis(ax, grid=False):
