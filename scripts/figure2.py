@@ -261,11 +261,10 @@ def main():
                  va="bottom", ha="left", color=INK)
 
     OUTDIR.mkdir(parents=True, exist_ok=True)
-    for ext in ("pdf", "png"):
-        out = OUTDIR / f"figure2.{ext}"
-        fig.savefig(out, dpi=450 if ext == "png" else None, facecolor="white")
-        print("wrote", out.relative_to(REPO))
+    out = OUTDIR / "figure2.pdf"
+    fig.savefig(out, facecolor="white")
     plt.close(fig)
+    print("wrote", out.relative_to(REPO))
 
 
 if __name__ == "__main__":
