@@ -72,14 +72,19 @@ INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
 # OUP's floor is 0.25 pt, so nothing here may go below it.
 SPINE_LW, TICK_LW, TICK_LEN, GRID_LW, ERR_LW = 0.7, 0.6, 2.5, 0.4, 0.7
 
-TOP_LABEL = (r"$\ln\left(\frac{\sum\ \mathrm{Top\ 40\ OTUs}}"
-             r"{\sum \mathrm{Bottom\ 40\ OTUs}}\right)$")
-# 2.04 computes mean(beta | top 40) - mean(beta | bottom 40): a difference, with
-# no log and no division. beta is already a log-link coefficient, so this is a
-# log-ratio of modelled abundances -- writing ln(beta/beta), as the published
-# figure does, logs the coefficients a second time.
-BOT_LABEL = (r"$\bar{\beta}_{\mathrm{Top\ 40\ OTUs}}"
-             r" - \bar{\beta}_{\mathrm{Bottom\ 40\ OTUs}}$")
+# The bottom row is the derivative of the top row, so both axes name the same
+# log-ratio and only the leading Delta differs.
+#
+# 2.04 computes mean(beta | top 40) - mean(beta | bottom 40). beta is a log-link
+# coefficient, so that difference IS the change in the log-ratio across the
+# contrast -- exact when features within a set are equally abundant. Note the
+# label cannot put the betas inside the log: the bottom 40 are by construction
+# the most negative coefficients, so beta_bar_bottom < 0 for every contrast and
+# ln(beta_bar_top / beta_bar_bottom) is undefined over the reals.
+_RATIO = (r"\ln\left(\frac{\sum\ \mathrm{Top\ 40\ OTUs}}"
+          r"{\sum \mathrm{Bottom\ 40\ OTUs}}\right)")
+TOP_LABEL = f"${_RATIO}$"
+BOT_LABEL = rf"$\Delta\ {_RATIO}$"
 
 
 def style_axis(ax, grid=False):
