@@ -22,8 +22,8 @@ class ABXModelSingle(SingleFeatureModel):
         table: biom.Table,
         feature_id: str,
         beta_prior: float = 10.0,
-        disp_scale: float = 5.0,
-        subj_prior: float = 2.0,
+        disp_scale: float = 0.5,
+        subj_prior: float = 3.0,
         num_iter: int = 500,
         num_warmup: int = 1000,
         **kwargs

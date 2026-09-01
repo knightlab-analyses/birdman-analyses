@@ -28,7 +28,7 @@ FIDS = TABLE.ids(axis="observation")
 @click.option("--num-iter", default=500)
 @click.option("--num-warmup", default=1000)
 @click.option("--beta-prior", default=10.0)
-@click.option("--disp-scale", default=3.0)
+@click.option("--disp-scale", default=0.5)
 @click.option("--re-prior", default=3.0)
 @click.option("--logfile", required=True)
 # was a hardcoded 10s pause for the panfs mount; unnecessary locally
