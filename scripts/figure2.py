@@ -56,7 +56,6 @@ N_LOGRATIO = 40      # features in each half of the panel b log-ratio
 N_BOOT, SEED = 1000, 0    # bootstrap CI for the panel b bands; seeded, so the
                           # bands are identical run to run
 
-# authored at final print width so production does not scale the type down
 FIG_W_MM, FIG_H_MM = 180.0, 114.0          # OUP double column
 MM = 1 / 25.4
 BASE_PT = 6.5
@@ -68,19 +67,10 @@ RAMP = (0.22, 0.92)
 SUBJ_COLORS = ["#0173b2", "#de8f05", "#029e73"]
 INK, MUTED, RULE, GRID = "#222222", "#666666", "#BBBBBB", "#DDDDDD"
 
-# one set of chrome weights for both panels, so a and b read as one figure.
-# OUP's floor is 0.25 pt, so nothing here may go below it.
+# OUP's line-weight floor is 0.25 pt.
 SPINE_LW, TICK_LW, TICK_LEN, GRID_LW, ERR_LW = 0.7, 0.6, 2.5, 0.4, 0.7
 
-# The bottom row is the derivative of the top row, so both axes name the same
-# log-ratio and only the leading Delta differs.
-#
-# 2.04 computes mean(beta | top 40) - mean(beta | bottom 40). beta is a log-link
-# coefficient, so that difference IS the change in the log-ratio across the
-# contrast -- exact when features within a set are equally abundant. Note the
-# label cannot put the betas inside the log: the bottom 40 are by construction
-# the most negative coefficients, so beta_bar_bottom < 0 for every contrast and
-# ln(beta_bar_top / beta_bar_bottom) is undefined over the reals.
+# beta_bar_bottom < 0 for every contrast, so the betas cannot go inside the log.
 _RATIO = (r"\ln\left(\frac{\sum\ \mathrm{Top\ 40\ OTUs}}"
           r"{\sum \mathrm{Bottom\ 40\ OTUs}}\right)")
 TOP_LABEL = f"${_RATIO}$"
@@ -119,7 +109,6 @@ def panel_a(ax):
     means = sel[mean_col].to_numpy()
     ys = np.arange(len(sel))                 # ascending, so most positive on top
 
-    # Shade each bar by |differential|, scaled within its own direction.
     scale = {1: means.max(), -1: abs(means.min())}
     colors = [(BV_CMAP if m > 0 else HEALTH_CMAP)(
                   RAMP[0] + (RAMP[1] - RAMP[0]) * abs(m) / scale[np.sign(m)])
@@ -134,7 +123,6 @@ def panel_a(ax):
     ax.set_yticks(ys)
     ax.set_yticklabels([f.replace("_", " ") for f in sel.index], fontsize=BASE_PT)
     ax.set_ylim(-0.7, len(sel) - 0.3)
-    # the differential is the posterior coefficient; matches panel b's beta bar
     ax.set_xlabel(r"BIRDMAn $\beta$", fontsize=BASE_PT + 1.5, color=INK, labelpad=4)
     style_axis(ax)
     for side, spine in ax.spines.items():
@@ -234,7 +222,6 @@ def panel_b(fig, gs):
             ax.plot(xs, bound, color="gray", ls="--", lw=0.8, zorder=3)
         ax.plot(xs, mid, marker="o", ms=3, lw=1.0, color="gray",
                 markeredgecolor=INK, markeredgewidth=0.4, zorder=4)
-        # six derivatives sit between the seven timepoints they contrast
         ax.set_xticks(np.arange(-1, 6))
         ax.set_xticklabels(LEVELS, rotation=45, ha="right", fontsize=BASE_PT)
         ax.set_xlim(-1.25, 5.25)
@@ -246,25 +233,23 @@ def panel_b(fig, gs):
 # ---------------------------------------------------------------------------
 def main():
     fig = plt.figure(figsize=(FIG_W_MM * MM, FIG_H_MM * MM))
-    # wspace is the gap between panel a and panel b; it has to clear panel b's
-    # math ylabel, which is wide. panel b's internal gap is set on the subgrid.
+    # wspace has to clear panel b's math ylabel
     gs = GridSpec(2, 3, figure=fig, width_ratios=[1.22, 1.0, 1.0],
                   hspace=0.18, wspace=0.62, left=0.170, right=0.988,
                   top=0.90, bottom=0.17)
     panel_a(fig.add_subplot(gs[:, 0]))
     panel_b(fig, gs[:, 1:].subgridspec(2, 2, wspace=0.08, hspace=0.18))
 
-    # Panel labels in figure coordinates so long tick labels cannot push them
-    # off-canvas.
     for x, label in ((0.010, "a"), (0.455, "b")):
         fig.text(x, 0.935, label, fontsize=BASE_PT + 4, fontweight="bold",
                  va="bottom", ha="left", color=INK)
 
     OUTDIR.mkdir(parents=True, exist_ok=True)
-    out = OUTDIR / "figure2.pdf"
-    fig.savefig(out, facecolor="white")
+    for ext, dpi in (("pdf", None), ("png", 450)):
+        out = OUTDIR / f"figure2.{ext}"
+        fig.savefig(out, dpi=dpi, facecolor="white")
+        print("wrote", out.relative_to(REPO))
     plt.close(fig)
-    print("wrote", out.relative_to(REPO))
 
 
 if __name__ == "__main__":

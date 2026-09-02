@@ -21,3 +21,6 @@ src/*/stan/*regression
 
 # macOS
 .DS_Store
+
+# rendered previews; the tracked figure artifact is the PDF
+figures/*.png
