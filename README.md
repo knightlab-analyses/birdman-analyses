@@ -1,7 +1,7 @@
 # BIRDMAn Manuscript Analyses
 
 Data and code for Figure 2 of the **BIRDMAn** manuscript. The package itself is
-at [`biocore/birdman`](https://github.com/biocore/birdman).
+at [`biocore/BIRDMAn`](https://github.com/biocore/BIRDMAn).
 
 ## Figure 2
 
@@ -24,9 +24,9 @@ posterior means shift with the seed (pooled Spearman ~0.97).
 
 ## Citation
 
-Rahman G, Patel L, Chen Y, *et al.* BIRDMAn: a flexible Bayesian framework for
+Rahman G, Patel L, Chen Y, *et al.* BIRDMAn: a flexible framework for Bayesian
 differential abundance analysis of microbiome data.
-[bioRxiv 2023.01.30.526328](https://www.biorxiv.org/content/10.1101/2023.01.30.526328v1)
+[bioRxiv 2023.01.30.526328](https://doi.org/10.1101/2023.01.30.526328)
 
 ## License and maintainers
 

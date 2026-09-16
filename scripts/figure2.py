@@ -172,7 +172,6 @@ def load_relman():
 
 
 def boot_ci(values, rng):
-    """95% bootstrap CI of the mean — the band seaborn draws, but seeded."""
     if len(values) < 2:
         return np.nan, np.nan
     draws = rng.choice(values, size=(N_BOOT, len(values)), replace=True)
