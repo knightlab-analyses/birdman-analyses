@@ -10,13 +10,24 @@
 import glob
 import re
 
+import os
+
+PROJ_DIR = os.environ.get(
+    "BIRDMAN_ANALYSES_DIR",
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+# where run_birdman_chunked.py wrote the per-feature .nc files
+inference_dir = os.environ.get(
+    "BIRDMAN_INFERENCE_DIR",
+    "/panfs/grahman/birdman-analyses-final/relman_abx/inferences"
+)
+
 import arviz as az
 import pandas as pd
 
 FEAT_REGEX = re.compile("F\d{4}_(.*).nc")
 
-inference_dir = "/panfs/grahman/birdman-analyses-final/relman_abx/inferences"
-outfile = "results/relman_abx/birdman_results.subj.tsv"
+outfile = f"{PROJ_DIR}/results/relman_abx/birdman_results.subj.tsv"
 all_inf_files = glob.glob(f"{inference_dir}/*.nc")
 
 def process_dataframe(df, feat_id, suffix=""):
